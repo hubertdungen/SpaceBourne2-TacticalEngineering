@@ -13,13 +13,13 @@
   Design notes and the test log: DESIGN.md in the repository.
 ]]
 
-local VERSION = "0.1.0"
+local VERSION = "0.1.1"
 
 local U = require("te.util")
 
 -- Settings -------------------------------------------------------------------------
 local defaults = {
-    Enabled = true, StartOn = false, ToggleHoldSeconds = 2.0, TripleTapSeconds = 1.5, DeployKey = "DEL",
+    Enabled = true, StartOn = true, ToggleHoldSeconds = 2.0, TripleTapSeconds = 1.5, DeployKey = "DEL",
     UseTurretPerkButton = true, BlockVanillaTurretPerk = true,
     Player = { DeploySeconds = 6.0, PackSeconds = 5.0, PackRange = 300, CarrySpeed = 0.8, CarryNoSprint = true,
         Resupply = "ship", ResupplyMinutes = 5 },
@@ -149,10 +149,10 @@ end)
 -- Deploy key ------------------------------------------------------------------------------
 -- Same rules as HTR 0.4.4 and the realism set's shared key plan:
 --   * a UE4SS key name ("DEL", "F11"...), optionally with Shift: "Shift+DEL";
---   * keys the game uses itself (F1-F6, F8 quick load, F10, F12) are refused without a
---     modifier and the default (Delete) is used instead;
+--   * keys the game uses itself (F1-F6, F8 quick load, F10, F11 fullscreen, F12) are refused
+--     without a modifier and the default (Delete) is used instead;
 --   * a plain key stays quiet while Shift / Ctrl / Alt is held, so Shift+Delete stays free.
-local GAME_KEYS = { F1 = 1, F2 = 1, F3 = 1, F4 = 1, F5 = 1, F6 = 1, F8 = 1, F10 = 1, F12 = 1 }
+local GAME_KEYS = { F1 = 1, F2 = 1, F3 = 1, F4 = 1, F5 = 1, F6 = 1, F8 = 1, F10 = 1, F11 = 1, F12 = 1 }
 local KEY_ALIAS = { INSERT = "INS", DELETE = "DEL", PAGEDOWN = "PAGE_DOWN", PAGEUP = "PAGE_UP", ESC = "ESCAPE" }
 local MODS = { CTRL = "CONTROL", CONTROL = "CONTROL", SHIFT = "SHIFT", ALT = "ALT" }
 local function parseKey(spec)

@@ -9,10 +9,10 @@ return {
     -- false = the mod does nothing at all (not even the on/off key).
     Enabled = true,
 
-    -- Tactical Engineering starts OFF. In game, on foot, HOLD the deploy key for
-    -- ToggleHoldSeconds to switch it on or off (remembered between sessions).
-    -- While off, the vanilla turret perk works as usual.
-    StartOn = false,
+    -- Tactical Engineering starts ON. In game, on foot, HOLD the deploy key for
+    -- ToggleHoldSeconds to switch it off or on (remembered between sessions).
+    -- While off, the vanilla turret perk works as usual. false = start off.
+    StartOn = true,
     ToggleHoldSeconds = 2.0,
     -- Gamepad: tap the turret perk button 3 times within this many seconds to switch on / off.
     TripleTapSeconds = 1.5,
@@ -20,7 +20,7 @@ return {
     -- Deploy key. Tap: deploy your turret, pack it up (when you are next to it) or cancel.
     -- Any UE4SS key name (DEL = Delete, F11, NUM_ZERO, ...), optionally with Shift: "Shift+DEL".
     -- "" = no key. Delete is unbound in the game. Keys the game uses itself (F1-F6, F8 quick load,
-    -- F10, F12) are refused without a modifier. The plain key does nothing while Shift, Ctrl or
+    -- F10, F11 fullscreen, F12) are refused without a modifier. The plain key does nothing while Shift, Ctrl or
     -- Alt is held, so Shift+Delete stays free for other mods (realism set key plan).
     DeployKey = "DEL",
 

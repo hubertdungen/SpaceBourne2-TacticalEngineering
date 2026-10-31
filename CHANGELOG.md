@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 — 2026-10-31
+
+- **On by default.** Installed, Tactical Engineering is on: you downloaded it because you want it.
+  Hold Delete for 2 s (or tap the turret perk button 3 times) to switch it off, and the vanilla
+  turret perk comes back. If you switched it off in 0.1.0, it stays off until you switch it on.
+- F11 (the game's fullscreen key, and HTR's) can't be set as the plain deploy key any more.
+
 ## 0.1.0 — 2026-10-30
 
 First release.

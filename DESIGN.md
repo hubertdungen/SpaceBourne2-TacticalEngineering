@@ -7,8 +7,9 @@ from the original plan, the text says so.
 Name history: this started as "Engineering Turrets (ET)". The release name is **Tactical Engineering**,
 the mod folder is `TacticalEngineering`, and its Lua modules live in `te/`.
 
-**0.1.0 in short** (details in the sections below):
-- **On/off**: off by default. Holding the deploy key (Delete) for 2 s switches it on or off, and the
+**0.1.1 in short** (details in the sections below):
+- **On/off**: on by default since 0.1.1 (`StartOn = true`; the user's rule: a mod you install should
+  come active). Holding the deploy key (Delete) for 2 s switches it on or off, and the
   setting is remembered in `te_state.txt`. The shared key plan gives this mod only Delete, so it needs
   no extra key.
 - **Deploy key**: a tap deploys, packs or cancels. The vanilla turret perk button does the same.
@@ -28,8 +29,8 @@ Goal: make the engineering perks real engineering, starting with the turret.
 - It can be destroyed, and enemies notice it and try to destroy it.
 - A few allied NPCs carry one and deploy it like engineers.
 
-The mod is a separate UE4SS Lua mod (`TacticalEngineering/`). It ships **off by default**: hold Delete
-to switch it on. It works with or without HTR. With HTR, see §11 for an optional HTR-side improvement.
+The mod is a separate UE4SS Lua mod (`TacticalEngineering/`). It ships **on by default** (since 0.1.1):
+hold Delete to switch it off. It works with or without HTR. With HTR, see §11 for an optional HTR-side improvement.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -210,7 +211,7 @@ the turret's remaining structure, and the time it was lost.
   - the plain key does nothing while Shift, Ctrl or Alt is held (checked with
     `PlayerController:IsInputKeyDown`), so Shift+Delete stays a spare for the set;
   - `"Shift+DEL"`-style strings work;
-  - a plain game key (F1–F6, F8, F10, F12) is refused and falls back to Delete.
+  - a plain game key (F1–F6, F8, F10, F11, F12) is refused and falls back to Delete.
 - **`UseTurretPerkButton`**: the vanilla turret perk button does the same thing. With `P_Turret.CD` kept at 0,
   the vanilla `SpawnTurrets()` returns before it spends energy or touches any turret. A post-hook on
   `Q1_Character:SpawnTurrets` then acts as the deploy/pack button. This gives gamepad players a button for
@@ -741,6 +742,15 @@ periodic spikes.
 - Nexus Mods: https://www.nexusmods.com/spacebourne2/mods/10 (Main file 0.1.0, UE4SS 3.0.1 as an external
   requirement, MIT licence as custom permissions).
 - The README's `mods/0` placeholder links now point to `mods/10`.
+
+### 0.1.1 (2026-10-31)
+
+On by default (`StartOn = true`), at the user's request ("e aos mods virem já ativos"), and plain F11
+refused as the deploy key. A saved `te_state.txt` still wins, so a player who switched 0.1.0 off keeps
+it off.
+
+Checked in game on 2026-10-31 (HTR 0.4.8 installed), fresh install with no `te_state.txt`: the mod loads
+ON, and a real Delete tap deploys the turret (6 s, then "Turret deployed - 300 rounds"). No errors.
 
 Still not tested in game: companion engineers, the rare enemy engineers, the HTR 0.4.8 `turret_light`
 caliber, and Silent Ops 0.2 hearing the turret.

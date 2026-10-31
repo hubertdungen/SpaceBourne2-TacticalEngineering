@@ -2,7 +2,7 @@
 
 The turret perk stops being an instant MMO spawn and becomes real engineering. You carry one heavy turret, kneel to set it up and to pack it up, and lose it if you leave it behind. Once it is deployed it does the job, and the enemy treats it as a threat: they shoot back until it breaks.
 
-Version 0.1.0 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering]GitHub[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
+Version 0.1.1 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering]GitHub[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
 
 [line]
 [size=5][b]What it does[/b][/size]
@@ -19,7 +19,7 @@ Version 0.1.0 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngin
 [*][b]It can be destroyed.[/b] Rifle hits chip it, snipers and heavy weapons hurt, explosions wreck it. A destroyed turret stays as a dead wreck.
 [*][b]Enemies fight back.[/b] Enemies hit by a turret, or near one that is firing, turn and shoot it: up to 3 at a time, for a few seconds, then they choose again between you and the turret.
 [*][b]Ally engineers (optional).[/b] Squad soldiers, including the game's unused "Turretci" role, and companions can stop in a fight and deploy a turret of their own.
-[*][b]Off by default.[/b] Nothing changes until you hold Delete for 2 seconds.
+[*][b]On by default.[/b] Installed, it is on. Hold Delete for 2 seconds to switch it off (the vanilla turret perk comes back) or on again.
 [/list]
 
 [line]
@@ -36,9 +36,9 @@ Version 0.1.0 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngin
 [size=5][b]Install[/b][/size]
 
 [list=1]
-[*]Download TacticalEngineering-0.1.0.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
+[*]Download TacticalEngineering-0.1.1.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
 [*]Extract it into the game folder (...\steamapps\common\SpaceBourne 2\). It adds SB2\Binaries\Win64\Mods\TacticalEngineering\; the enabled.txt inside turns it on.
-[*]In game, on foot, [b]hold Delete for 2 seconds[/b] to switch Tactical Engineering on (remembered between sessions).
+[*]That's it: Tactical Engineering is on in game. To switch it off, hold Delete for 2 seconds on foot (remembered between sessions). StartOn = false in scripts\config.lua makes a fresh install start off.
 [/list]
 
 Manual install: copy the TacticalEngineering folder from this repository into SpaceBourne 2\SB2\Binaries\Win64\Mods\.
@@ -58,7 +58,7 @@ Turret perk button, 3 quick taps  Tactical Engineering on / off (the gamepad way
 
 Each key press shows one short message on the HUD, without the game's "tu-tu-tu" alarm. Like HTR, Tactical Engineering mutes that one sound for 2 seconds around its own messages. There is no countdown, and damage to your turret is reported only at 75, 50 and 25 %.
 
-Delete is unbound in the game. The plain key does nothing while Shift, Ctrl or Alt is held, so [b]Shift+Delete[/b] stays free for Gear Without Levels. The key can be changed in scripts\config.lua.
+Delete is unbound in the game. The plain key does nothing while Shift, Ctrl or Alt is held, so [b]Shift+Delete[/b] stays free for Gear Without Levels. The key can be changed in scripts\config.lua; the game's own keys (F1–F6, F8, F10, F11, F12) are refused without a modifier.
 
 While Tactical Engineering is on, the vanilla instant turret perk is switched off: its icon shows as cooling down. Switch Tactical Engineering off, and the vanilla perk works as before.
 
