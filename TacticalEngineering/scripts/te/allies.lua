@@ -73,7 +73,7 @@ end
 
 -- Post-hook of Master_Soldier:UpdateBattle (every 1.5 s per soldier).
 function E.onSquadBattle(self)
-    if not (E.T.on and E.cfg.Allies.Engineers) then return end
+    if not (E.T.on and E.T.allies) then return end
     local s = self:get()
     local a = U.addr(s)
     if not a or U.get(s, P.SoldierSide, 1) ~= G.AIType.Ally then return end
@@ -85,7 +85,7 @@ end
 
 -- From targeting.lua's 1 s think, for companions and other allied shooters.
 function E.onCompanionThink(npc, a, now)
-    if not E.cfg.Allies.Engineers then return end
+    if not E.T.allies then return end
     if not isEngineer(a, E.cfg.Allies.CompanionEngineerChance, false) then return end
     local inCombat = false
     pcall(function() inCombat = U.valid(npc[P.CurrentDetected].DetectedActor) end)

@@ -845,6 +845,22 @@ TE off now clears `BarrierCD` once, or the vanilla barricade would stay "cooling
 - Both perks at level 0: "Requires the Turret perk", "Requires the Barricade perk"; a deployed turret
   can still be packed.
 
+### 0.2.1 (2026-10-31): ally engineers on by default, in-game switch
+
+The user's rule: features on by default and easy to switch, never config-only. Ally engineers were off
+because of one unexplained freeze in a 2026-10-30 allies-on test. Since then the Ammo Discipline session
+found that the game dies at start-up while Windows is on the lock screen, with no crash report, which
+fits that freeze; the next allies-on run, and this one, were stable.
+
+- `T.allies` (state file `allies=on|off`; first start from `Allies.Engineers`, now true). The squad
+  hook is always registered; `E.onSquadBattle` / `E.onCompanionThink` read `T.allies`.
+- Gesture on the existing perk buttons (no new key): taps within `TripleTapSeconds` (1.5 s). 4 taps =
+  ally engineers on / off (HUD "Ally engineers ON/OFF"). 3 taps = the whole mod, decided when the window
+  closes, so a fourth tap can still come. Taps 1-2 act as normal presses (deploy, then cancel).
+- In game (one launch, chances 1.0 for the test): 4 taps → "Ally engineers OFF", 4 more → "ON"; 3 taps →
+  "Tactical Engineering OFF" after the window. In a fight, two squad soldiers each deployed a turret (the
+  cap is 2), both active. One 34 ms hitch at the first ally spawn. No errors.
+
 **Turret scale 0.6** (the user's request; was 0.8). `JustShoot` spawns its rounds with
 `SpawnProjectileSingleByChannel` at `self.Muzzle:K2_GetComponentLocation()` (read), a component that
 follows the actor scale. In game: the muzzle was 96 cm from the root (dz 82) at 0.6 and 160 cm (dz 136)

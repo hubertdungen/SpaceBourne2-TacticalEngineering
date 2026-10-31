@@ -8,7 +8,7 @@ deployed it does the job, and the enemy treats it as a threat: they shoot back u
 The barricade perk gets the same treatment, and higher perk levels make you a better engineer.
 It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.0 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
+Version 0.2.1 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
 works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism).
 
 ## What it does
@@ -48,8 +48,9 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 - **Perk levels matter (new in 0.2).** Each level of the turret or barricade perk above 1 sets up
   15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500).
   Small steps, no MMO scaling.
-- **Ally engineers (optional).** Squad soldiers, including the game's unused "Turretci" role, and
-  companions can stop in a fight and deploy a turret of their own.
+- **Ally engineers (on by default).** Squad soldiers, including the game's unused "Turretci" role,
+  and companions can stop in a fight and deploy a turret of their own (at most 2 per area). Tap a
+  perk button 4 times quickly to switch them off or on.
 - **On by default.** Installed, it is on. Tap the turret or barricade perk button 3 times quickly to
   switch it off (the vanilla perks come back) or on again.
 
@@ -70,7 +71,7 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 
 ## Install
 
-1. Download `TacticalEngineering-0.2.0.zip` from the
+1. Download `TacticalEngineering-0.2.1.zip` from the
    [releases](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases).
 2. Extract it into the game folder (`...\steamapps\common\SpaceBourne 2\`). It adds
    `SB2\Binaries\Win64\Mods\TacticalEngineering\`; the `enabled.txt` inside turns it on.
@@ -93,7 +94,7 @@ The game's own perk buttons, in whatever action slot you put the perks. No new k
 | **Turret perk button** | Carrying: deploy. Next to your turret: pack it up. While working: cancel. |
 | **Barricade perk button** | Build a barricade. Next to one of yours: pack it up. While working: cancel. |
 | Either one, **3 quick taps** | Switches the **whole mod** on / off (on by default). While it is off, the first taps are still the vanilla perk. |
-| Ally engineers | No button. They are a config option, `Allies.Engineers`, off by default. |
+| Either one, **4 quick taps** | Switches the **ally engineers** on / off (on by default). The HUD says "Ally engineers ON" / "OFF". |
 
 Each press shows one short message on the HUD, without the game's "tu-tu-tu" alarm. Like HTR,
 Tactical Engineering mutes that one sound for 2 seconds around its own messages. There is no
@@ -139,11 +140,33 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
   - the chance per second;
   - at most how many at once, and for how long.
 - `Allies`:
-  - `Engineers` (off by default);
+  - `Engineers`: the starting state (on); 4 quick taps switch them in game;
   - chances for squad soldiers and companions;
   - `MaxAllyTurrets` per level.
 
-## Status and known limits
+## Known limits
+
+- **NPCs don't take cover behind barricades.** The game's AI has no cover search to use them. The
+  wall still stops rounds for anyone standing behind it.
+- **Only enemy rounds wear barricades down.** Grenades and other blasts don't damage them.
+- **With Silent Ops, work noise is mild for now.** Silent Ops hears a turret being set up (12 m),
+  packed and firing, but one setup or pack only adds a little suspicion, and it doesn't read
+  barricade work yet. Tuning that is on the Silent Ops side.
+- **No new animations.** Kneeling is the normal crouch, and the turret uses the vanilla perk's
+  unfold animation. The packed turret isn't visible on your back.
+- **Enemies notice it, they don't see it.** The game's enemies only "see" people. They turn on a
+  turret once it shoots them or fires near them, not by spotting a silent one.
+- **Short hitches.** The first deploy of a session, the first enemy that turns on a turret, and
+  packing up a barricade can each cost one frame of about 50 ms.
+- **The state is not per save.** It is per game install: loading an older save keeps your current
+  turret state.
+
+<!-- nexus:skip -->
+## Test status
+
+0.2.1 tested in game on 2026-10-31, with HTR 0.4.8:
+- 4 quick perk-button taps switching the ally engineers off and on, 3 taps the whole mod;
+- two squad soldiers deploying their turrets in a fight (the cap is 2).
 
 0.2 tested in game on 2026-10-31, with HTR 0.4.8:
 - the barricade perk call: no vanilla wall, no energy spent; a 3.4 s build at perk level 2, no
@@ -184,24 +207,9 @@ Not tested yet:
 - the replacement after 5 minutes at a real ship or station on a planet run;
 - the turret's own ballistics in HTR 0.4.8 (`turret_light`), and Silent Ops 0.2 hearing the turret.
 
-Known limits:
-
-- **NPCs don't take cover behind barricades.** The game's AI has no cover search to use them. The
-  wall still stops rounds for anyone standing behind it.
-- **Only enemy rounds wear barricades down.** Grenades and other blasts don't damage them.
-- **With Silent Ops, work noise is mild for now.** Silent Ops hears a turret being set up (12 m),
-  packed and firing, but one setup or pack only adds a little suspicion, and it doesn't read
-  barricade work yet. Tuning that is on the Silent Ops side.
-- **No new animations.** Kneeling is the normal crouch, and the turret uses the vanilla perk's
-  unfold animation. The packed turret isn't visible on your back.
-- **Enemies notice it, they don't see it.** The game's enemies only "see" people. They turn on a
-  turret once it shoots them or fires near them, not by spotting a silent one.
-- **Short hitches.** The first deploy of a session, the first enemy that turns on a turret, and
-  packing up a barricade can each cost one frame of about 50 ms.
-- **The state is not per save.** It is per game install: loading an older save keeps your current
-  turret state.
 
 Design notes, research and the full test log: [DESIGN.md](DESIGN.md).
+<!-- /nexus:skip -->
 
 ## Part of the SpaceBourne 2 realism set
 

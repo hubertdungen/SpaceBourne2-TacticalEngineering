@@ -15,7 +15,7 @@
   Design notes and the test log: DESIGN.md in the repository.
 ]]
 
-local VERSION = "0.2.0"
+local VERSION = "0.2.1"
 
 local U = require("te.util")
 
@@ -33,7 +33,7 @@ local defaults = {
         ExtraPerLevel = 1, Structure = 150 },
     Enemies = { AttackTurrets = true, AwareRadius = 2500, TargetChance = 0.6, MaxAttackers = 3,
         FocusSeconds = { 4, 8 }, SimulatedHits = false, DamageEnemyMiniTurrets = true, EngineerChance = 0.0 },
-    Allies = { Engineers = false, TurretciAreEngineers = true, SquadEngineerChance = 0.10,
+    Allies = { Enabled = true, Engineers = true, TurretciAreEngineers = true, SquadEngineerChance = 0.10,
         CompanionEngineerChance = 0.15, DeploySeconds = 8.0, MaxAllyTurrets = 2 },
     Noise = { WorkRadius = 1500, FireRadius = 6000, AlertEnemies = true, Search = true, SearchRadius = 400,
         SearchSeconds = 12 },
@@ -101,7 +101,7 @@ H.add(G.Fn.TurretBeginPlay, T.onTurretBeginPlay, "turret begin play")
 H.add(G.Fn.TurretTick, T.onTurretTick, "turret tick")
 H.add(G.Fn.TurretDamage, T.onTurretDamage, "turret damage")
 -- shooters (enemies and companions)
-if cfg.Enemies.AttackTurrets or cfg.Allies.Engineers or cfg.Enemies.EngineerChance > 0 or cfg.Noise.AlertEnemies then
+if cfg.Enemies.AttackTurrets or cfg.Allies.Enabled ~= false or cfg.Enemies.EngineerChance > 0 or cfg.Noise.AlertEnemies then
     H.add(G.Fn.NpcThink, A.onNpcThink, "NPC think")
 end
 if cfg.Enemies.AttackTurrets then
@@ -114,7 +114,8 @@ if cfg.Enemies.AttackTurrets then
 end
 if cfg.Enemies.DamageEnemyMiniTurrets then H.add(G.Fn.MiniTurretDamage, E.onMiniTurretDamage, "mini-turret damage") end
 -- squad soldiers: often not loaded, so look for the class at most every 60 s (+ on arrival)
-if cfg.Allies.Engineers then H.add(G.Fn.SquadBattle, E.onSquadBattle, "squad engineer", 60) end
+-- (registered even while ally engineers are switched off: 4 quick perk-button taps switch them on)
+if cfg.Allies.Enabled ~= false then H.add(G.Fn.SquadBattle, E.onSquadBattle, "squad engineer", 60) end
 
 -- Development commands (Debug.TestCommands): one per line in te_cmd.txt, read once a second.
 local CMD_FILE = U.Dir .. "te_cmd.txt"

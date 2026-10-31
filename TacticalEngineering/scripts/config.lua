@@ -11,8 +11,10 @@ return {
 
     -- Tactical Engineering starts ON. While off, the vanilla perks work as usual. false = start off.
     StartOn = true,
-    -- Tap the turret or barricade perk button 3 times within this many seconds to switch
-    -- Tactical Engineering off / on (remembered between sessions). Works on keyboard and gamepad.
+    -- Quick taps on the turret or barricade perk button, all within this many seconds (keyboard or
+    -- gamepad; remembered between sessions):
+    --   3 taps: Tactical Engineering off / on (decided when the time is up)
+    --   4 taps: ally engineers off / on
     TripleTapSeconds = 1.5,
 
     -- Controls: the game's own perk buttons, wherever you put the perks (action slots).
@@ -111,7 +113,9 @@ return {
     },
 
     Allies = {
-        Engineers               = false, -- some squad soldiers / companions carry and deploy a turret
+        -- Some squad soldiers / companions carry and deploy a turret. This is only the starting state:
+        -- in game, 4 quick taps on the turret or barricade perk button switch them on / off (remembered).
+        Engineers               = true,
         TurretciAreEngineers    = true,  -- squad soldiers with the game's unused "Turretci" role always are
         SquadEngineerChance     = 0.10,
         CompanionEngineerChance = 0.15,

@@ -86,6 +86,7 @@ function T.init(c)
     local s = U.loadState(STATE_FILE)
     T.loaded = s
     if s.on ~= nil then T.on = (s.on == "on") else T.on = c.StartOn == true end
+    if s.allies ~= nil then T.allies = (s.allies == "on") else T.allies = c.Allies.Engineers ~= false end
     T.structure = math.min(100, tonumber(s.structure) or 100) -- % (0.1.x stored points out of 100: the same)
     T.lostAt = tonumber(s.lostAt) or 0
     T.ammo = tonumber(s.ammo) or c.Turret.Rounds
@@ -100,7 +101,8 @@ function T.init(c)
 end
 
 function T.save()
-    local s = { on = T.on and "on" or "off", state = T.state, structure = math.floor(T.structure + 0.5),
+    local s = { on = T.on and "on" or "off", allies = T.allies and "on" or "off", state = T.state,
+        structure = math.floor(T.structure + 0.5),
         lostAt = T.lostAt or 0, ammo = math.floor(T.ammo or 0) }
     for k, v in pairs(T.extra) do s[k] = v end
     U.saveState(STATE_FILE, s)
@@ -273,18 +275,32 @@ function T.onKey()
     T.hold = os.clock()
 end
 
--- Three quick taps on a perk button TE uses (turret or barricade) switch Tactical Engineering
--- on / off. Works while off. Returns true when this tap was the third.
+-- Quick taps on a perk button TE uses (turret or barricade), all within TripleTapSeconds:
+-- 3 = Tactical Engineering on / off, 4 = ally engineers on / off. The third tap waits for the
+-- window to close (step() decides), so a fourth can still come. Works while off.
+-- Returns true when this tap is part of a gesture (3rd or 4th) and must not act as a press.
 function T.tripleTap()
     local now = os.clock()
+    local w = cfg().TripleTapSeconds or 1.5
     T.taps[#T.taps + 1] = now
-    while #T.taps > 3 do table.remove(T.taps, 1) end
-    if #T.taps == 3 and now - T.taps[1] <= (cfg().TripleTapSeconds or 1.5) then
-        T.taps = {}
-        T.toggleReq = "toggle"
+    while #T.taps > 0 and now - T.taps[1] > w do table.remove(T.taps, 1) end
+    if #T.taps >= 4 then
+        T.taps, T.tapDecideAt = {}, nil
+        T.toggleReq = "allies"
+        return true
+    end
+    if #T.taps == 3 then
+        T.tapDecideAt = T.taps[1] + w
         return true
     end
     return false
+end
+
+function T.toggleAllies(p)
+    T.allies = not T.allies
+    T.save()
+    U.warn("ally engineers " .. (T.allies and "ON" or "OFF"))
+    U.notify(p, "Ally engineers " .. (T.allies and "ON" or "OFF") .. (T.on and "" or " (Tactical Engineering is off)"))
 end
 
 function T.onPerkButton(self)
@@ -514,11 +530,19 @@ local function step(p, now)
     if pos and T.lastPos and U.dist(pos, T.lastPos) > 1500 then onArrival(p) end -- elevator / new level
     T.lastPos = pos
     stepHold(p, now)
+    if T.tapDecideAt and now >= T.tapDecideAt then -- 3 taps and no fourth: on / off
+        T.tapDecideAt, T.taps = nil, {}
+        T.toggleReq = "toggle"
+    end
     if T.toggleReq then
         local r, want = T.toggleReq, nil
         T.toggleReq = nil
-        if r == "on" then want = true elseif r == "off" then want = false end
-        T.toggle(p, want)
+        if r == "allies" then
+            T.toggleAllies(p)
+        else
+            if r == "on" then want = true elseif r == "off" then want = false end
+            T.toggle(p, want)
+        end
     end
     if not T.on then
         T.pressed = false
@@ -773,7 +797,8 @@ end
 -- One line for te.log (Debug.TestCommands "status").
 function T.status()
     local now = os.clock()
-    local parts = { string.format("on=%s state=%s structure=%.0f ammo=%s work=%s player=%s", tostring(T.on), T.state,
+    local parts = { string.format("on=%s allies=%s state=%s structure=%.0f ammo=%s work=%s player=%s", tostring(T.on),
+        tostring(T.allies), T.state,
         T.structure, tostring(T.ammo), T.work and (T.work.kind .. string.format(" %.1fs", now - T.work.t0)) or "-", tostring(T.playerAddr)) }
     for a, e in pairs(T.turrets) do
         parts[#parts + 1] = string.format("[%s %s structure=%.0f dead=%s tick=%.1fs fired=%.1fs ammo=%s]", e.kind,

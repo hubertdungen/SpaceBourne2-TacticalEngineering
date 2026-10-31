@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — 2026-10-31
+
+- **Ally engineers on by default, with an in-game switch.** Tap the turret or barricade perk button
+  4 times quickly: "Ally engineers ON" / "OFF" (remembered). No config editing needed. Three taps
+  still switch the whole mod; they now wait 1.5 s for a possible fourth tap.
+
 ## 0.2.0 — 2026-10-31
 
 Ideas by hubertdungen (the author): perk levels that matter, barricades as field engineering,
