@@ -6,7 +6,7 @@ The turret perk stops being an instant MMO spawn and becomes real engineering. Y
 turret, kneel to set it up and to pack it up, and lose it if you leave it behind. Once it is
 deployed it does the job, and the enemy treats it as a threat: they shoot back until it breaks.
 
-Version 0.1.0 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/0) · UE4SS Lua mod ·
+Version 0.1.0 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
 works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism).
 
 ## What it does
@@ -167,7 +167,7 @@ Separate mods that work alone or together:
 | **Silent Ops** — realistic stealth | released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-SilentOps) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/6) |
 | **Split Controls** — separate invert for ship and on foot | released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-SplitControls) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/5) |
 | **Gear Without Levels** — use gear regardless of level | released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-GearWithoutLevels) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/7) |
-| **Tactical Engineering** — deployable turrets (this mod) | released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/0) |
+| **Tactical Engineering** — deployable turrets (this mod) | released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/10) |
 | Faction Power | coming |
 | Tactical First Person | coming |
 

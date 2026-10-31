@@ -734,3 +734,13 @@ allies-on run was stable through a full fight.
 
 The only extra spike is 64 ms at the first deploy of a session, the turret's first asset load. No new
 periodic spikes.
+
+### Released 0.1.0 (2026-10-31)
+
+- GitHub: https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering (release `v0.1.0`, lite zip).
+- Nexus Mods: https://www.nexusmods.com/spacebourne2/mods/10 (Main file 0.1.0, UE4SS 3.0.1 as an external
+  requirement, MIT licence as custom permissions).
+- The README's `mods/0` placeholder links now point to `mods/10`.
+
+Still not tested in game: companion engineers, the rare enemy engineers, the HTR 0.4.8 `turret_light`
+caliber, and Silent Ops 0.2 hearing the turret.
