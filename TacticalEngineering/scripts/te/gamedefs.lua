@@ -16,7 +16,10 @@ G.PerkTurret   = "/Game/IndustrialMachine2/Blueprints/Player_PerkTurret.Player_P
 G.PerkTurretCDO = "/Game/IndustrialMachine2/Blueprints/Player_PerkTurret.Default__Player_PerkTurret_C"
 -- the minibosses' "MiniTurrets" turret (shoots the player and companions only)
 G.MiniTurret   = "/Game/IndustrialMachine2/Blueprints/NPC_Shooter_Turret.NPC_Shooter_Turret_C"
+-- the barricade perk's energy-shield wall (Delay(LifeTime) -> destroy; no damage events)
 G.Barricade    = "/Game/1Data/Perks/CharacterPerks/Barricde.Barricde_C"
+G.BarricadeCDO = "/Game/1Data/Perks/CharacterPerks/Barricde.Default__Barricde_C"
+G.BarricadeAsset = "/Game/1Data/Perks/CharacterPerks/Barricde"
 -- kneel-and-work montage used by the trip-mine perk
 G.KneelMontage = "/Game/Locomotion/CharacterAssets/Animations/Mage_Beam_L_Loop_IP_Montage.Mage_Beam_L_Loop_IP_Montage"
 G.GameplayStatics = "/Script/Engine.Default__GameplayStatics"
@@ -45,6 +48,7 @@ G.Fn = {
     CanSprint        = G.ALSBase .. ":CanSprint",                       -- (out CanSprint)
     Regenerators     = G.ALSBase .. ":Regenerators",                    -- 0.25 s timer: energy regen, perk cooldowns +0.25
     SpawnTurretsPerk = G.Player .. ":SpawnTurrets",                     -- the vanilla turret perk button
+    BarricadePerk    = G.Player .. ":ActiavateBarricate",               -- (sic) the vanilla barricade perk button
     -- turrets
     TurretBeginPlay  = G.PerkTurret .. ":ReceiveBeginPlay",
     TurretTick       = G.PerkTurret .. ":ReceiveTick",                  -- (DeltaSeconds)
@@ -62,6 +66,11 @@ G.Fn = {
     -- squad soldiers
     SquadBattle      = G.Soldier .. ":UpdateBattle",                    -- every 1.5 s per soldier
 }
+-- An enemy round hit something: (OutProjectileObject, OutHitResult, ...). Same functions HTR hooks.
+G.ShooterProjectileHits = {
+    G.Shooter .. ":OnProjectileHit_03F94406443931C1DCEDC2920A189A84",
+    G.Shooter .. ":OnProjectileHit_EA71D2CB4AF2DDD1487199994F37FD32",
+}
 
 -- Properties (exact Blueprint names; some contain '?' or GUID suffixes) ----------
 G.P = {
@@ -69,6 +78,8 @@ G.P = {
     DisableMove = "DisableMove", DesiredStance = "DesiredStance", Flying = "Flying?", AtDialog = "AtDialog?",
     WhereIsPlayer = "WhereIsPlayer", BarricadeLocation = "BarricadeLocation", Movement = "CharacterMovement",
     PerkTurret = "P_Turret",                                  -- Perk_Learned_DAta struct
+    PerkBarricade = "P_Barricade",                            -- Perk_Learned_DAta struct
+    BarrierCD  = "BarrierCD",                                 -- vanilla barricade cooldown flag (true = cooling down)
     PerkCD     = "CD_11_004AEE844C3C3A073EF8EAAC2B628430",    -- seconds since last use (vanilla needs >= 20-30)
     PerkLevel  = "Level_8_5CAAAC454DB7C9AFB663B48B7761E974",
     -- Player_PerkTurret_C / NPC_Shooter_Turret_C

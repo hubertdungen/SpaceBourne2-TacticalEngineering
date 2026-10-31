@@ -7,30 +7,36 @@
     te/gamedefs.lua   every game-internal name (the only file to fix after a game patch)
     te/util.lua       helpers (logging, safe property access, keys, HUD messages, state file)
     te/hooks.lua      safe lazy hook registration (same design as HTR's)
-    te/turret.lua     the player's turret: carry / deploy / pack / lose, spawning, damage, carry weight
+    te/turret.lua     the player's turret: carry / deploy / pack / lose, spawning, damage, carry weight,
+                      perk-level bonuses
+    te/barricade.lua  the barricade perk as field engineering: build / pack / carry / restock / wear down
     te/targeting.lua  enemies notice turrets and shoot them
     te/allies.lua     ally engineers, rare enemy engineers, allies vs enemy mini-turrets
   Design notes and the test log: DESIGN.md in the repository.
 ]]
 
-local VERSION = "0.1.1"
+local VERSION = "0.2.0"
 
 local U = require("te.util")
 
 -- Settings -------------------------------------------------------------------------
 local defaults = {
-    Enabled = true, StartOn = true, ToggleHoldSeconds = 2.0, TripleTapSeconds = 1.5, DeployKey = "DEL",
+    Enabled = true, StartOn = true, ToggleHoldSeconds = 2.0, TripleTapSeconds = 1.5, DeployKey = "",
     UseTurretPerkButton = true, BlockVanillaTurretPerk = true,
     Player = { DeploySeconds = 6.0, PackSeconds = 5.0, PackRange = 300, CarrySpeed = 0.8, CarryNoSprint = true,
         Resupply = "ship", ResupplyMinutes = 5 },
-    Turret = { Scale = 0.8, Structure = 100, DestroyedEffect = "wreck", Rounds = 300,
+    Turret = { Scale = 0.6, Structure = 100, DestroyedEffect = "wreck", Rounds = 300,
         HitCost = { npc_rifle = 3, npc_boss = 4, npc_heavy = 8, npc_sniper = 12, npc_melee = 6,
             explosion = 40, player = 3, ally = 3, other = 3 } },
+    Levels = { SetupFaster = 0.15, ExtraRounds = 100, ExtraStructure = 0.20 },
+    Barricades = { Enabled = true, BuildSeconds = 4.0, PackSeconds = 3.0, PackRange = 300, Carried = 1,
+        ExtraPerLevel = 1, Structure = 150 },
     Enemies = { AttackTurrets = true, AwareRadius = 2500, TargetChance = 0.6, MaxAttackers = 3,
         FocusSeconds = { 4, 8 }, SimulatedHits = false, DamageEnemyMiniTurrets = true, EngineerChance = 0.0 },
     Allies = { Engineers = false, TurretciAreEngineers = true, SquadEngineerChance = 0.10,
         CompanionEngineerChance = 0.15, DeploySeconds = 8.0, MaxAllyTurrets = 2 },
-    Noise = { WorkRadius = 1500, FireRadius = 6000, AlertEnemies = true },
+    Noise = { WorkRadius = 1500, FireRadius = 6000, AlertEnemies = true, Search = true, SearchRadius = 400,
+        SearchSeconds = 12 },
     Messages = { Quiet = true },
     Debug = { Log = false, SlowHookMs = 8, TestCommands = false },
 }
@@ -71,13 +77,22 @@ local E = require("te.allies")
 T.init(cfg)
 E.init(cfg, T)
 A.init(cfg, T, E)
+local B = nil
+if cfg.Barricades.Enabled then
+    B = require("te.barricade")
+    B.init(cfg, T)
+end
 
 U.warn(string.format("=== Tactical Engineering %s loaded: %s, turret %s ===", VERSION, T.on and "ON" or "OFF", T.state))
 
 -- Hooks (all post-hooks on Blueprint functions; each returns at once while TE is off) --------
 -- player
 H.add(G.Fn.PlayerTick, T.onPlayerTick, "player tick")
-if cfg.BlockVanillaTurretPerk then H.add(G.Fn.Regenerators, T.onRegenerators, "vanilla turret perk block") end
+if cfg.BlockVanillaTurretPerk or B then H.add(G.Fn.Regenerators, T.onRegenerators, "vanilla perk block") end
+if B then
+    H.add(G.Fn.BarricadePerk, B.onPerkButton, "barricade perk button")
+    for i, path in ipairs(G.ShooterProjectileHits) do H.add(path, B.onShooterHit, "barricade hit " .. i) end
+end
 if cfg.UseTurretPerkButton then H.add(G.Fn.SpawnTurretsPerk, T.onPerkButton, "turret perk button") end
 if cfg.Player.CarrySpeed < 1 then H.add(G.Fn.MoveSettings, T.onMoveSettings, "carry speed") end
 if cfg.Player.CarryNoSprint then H.add(G.Fn.CanSprint, T.onCanSprint, "carry no sprint") end
@@ -113,10 +128,12 @@ local function testCommands()
         local cmd = line:match("^%s*(%S+)")
         if cmd == "press" then
             T.pressed = true
+        elseif cmd == "bpress" and B then
+            B.pressed = true
         elseif cmd == "toggle" or cmd == "on" or cmd == "off" then
             T.toggleReq = cmd
         elseif cmd == "status" then
-            U.warn("status: " .. T.status() .. " | " .. A.status())
+            U.warn("status: " .. T.status() .. " | " .. A.status() .. (B and (" | " .. B.status()) or ""))
         elseif cmd == "profile" then
             U.warn("profile: " .. H.profile())
         end
@@ -184,6 +201,7 @@ local function bindKey(spec, fn, fallback, what)
     return key
 end
 local key = bindKey(cfg.DeployKey, T.onKey, "DEL", "deploy")
+T.keyBound = key ~= nil
 T.keyName = U.unrealKey(key)
 T.keyLabel = U.keyLabel(key)
 U.log("deploy key " .. tostring(key) .. " (hold check: " .. tostring(T.keyName) .. ")")

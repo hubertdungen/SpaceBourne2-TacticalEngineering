@@ -23,7 +23,7 @@ local T = {
     keyName = nil,         -- the deploy key's Unreal name, for IsInputKeyDown
     toggleReq = nil,       -- "toggle" / "on" / "off" from a test command; handled with a live pawn
     state = "CARRIED",     -- CARRIED, DEPLOYING, DEPLOYED, PACKING, LOST, DESTROYED
-    structure = 100,       -- the player's turret structure, kept while carried
+    structure = 100,       -- the player's turret structure in % of its maximum, kept while carried
     turrets = {},          -- [address] = entry, see register()
     playerAddr = nil,
     playerCheckAt = 0,
@@ -38,19 +38,55 @@ local T = {
     ammo = 0,              -- rounds left for the player's turret (Turret.Rounds; 0 there = unlimited)
     noise = {},            -- recent noise events { id, X, Y, Z, radius, kind, t, source }
     noiseId = 0,
-    taps = {},             -- perk-button tap times (3 quick taps = on/off, for gamepads)
+    taps = {},             -- perk-button tap times (3 quick taps = on/off)
+    keyBound = false,      -- an extra deploy key is set (DeployKey)
+    turretUsable = false,  -- the turret perk is learned (refreshed every second)
+    B = nil,               -- barricade.lua, when barricades are enabled
+    extra = {},            -- more fields for the state file (barricades)
+    loaded = {},           -- the state file as read at start
 }
 local STATE_FILE = "te_state.txt"
 local KEEP = { CARRIED = true, LOST = true, DESTROYED = true }
 
 local function cfg() return T.cfg end
 
+-- Perk levels ----------------------------------------------------------------------------
+-- Bonus steps from a perk's level: 0 at level 1 (or not learned), 1 at level 2, 2 at level 3.
+function T.levelStep(lv)
+    return math.max(0, math.min(2, math.floor((tonumber(lv) or 0) - 1)))
+end
+
+function T.perkLevel(p, perk)
+    local lv = 0
+    pcall(function() lv = p[perk][P.PerkLevel] end)
+    return tonumber(lv) or 0
+end
+
+function T.turretStep(p) return T.levelStep(T.perkLevel(p, P.PerkTurret)) end
+
+-- Setup time shortened by Levels.SetupFaster per step.
+function T.faster(seconds, step)
+    return seconds * math.max(0.3, 1 - (cfg().Levels.SetupFaster or 0) * step)
+end
+
+-- Rounds the player's turret holds (0 = unlimited) and its structure, with the perk level.
+function T.maxRounds(p)
+    local r = cfg().Turret.Rounds
+    if r <= 0 then return 0 end
+    return r + (cfg().Levels.ExtraRounds or 0) * T.turretStep(p)
+end
+
+function T.maxStructure(p)
+    return cfg().Turret.Structure * (1 + (cfg().Levels.ExtraStructure or 0) * T.turretStep(p))
+end
+
 -- State ------------------------------------------------------------------------------
 function T.init(c)
     T.cfg = c
     local s = U.loadState(STATE_FILE)
+    T.loaded = s
     if s.on ~= nil then T.on = (s.on == "on") else T.on = c.StartOn == true end
-    T.structure = tonumber(s.structure) or c.Turret.Structure
+    T.structure = math.min(100, tonumber(s.structure) or 100) -- % (0.1.x stored points out of 100: the same)
     T.lostAt = tonumber(s.lostAt) or 0
     T.ammo = tonumber(s.ammo) or c.Turret.Rounds
     if KEEP[s.state or ""] then
@@ -64,8 +100,10 @@ function T.init(c)
 end
 
 function T.save()
-    U.saveState(STATE_FILE, { on = T.on and "on" or "off", state = T.state, structure = math.floor(T.structure + 0.5),
-        lostAt = T.lostAt or 0, ammo = math.floor(T.ammo or 0) })
+    local s = { on = T.on and "on" or "off", state = T.state, structure = math.floor(T.structure + 0.5),
+        lostAt = T.lostAt or 0, ammo = math.floor(T.ammo or 0) }
+    for k, v in pairs(T.extra) do s[k] = v end
+    U.saveState(STATE_FILE, s)
 end
 
 function T.setState(s)
@@ -225,6 +263,7 @@ local function canWork(p)
     if falling then return false, nil end
     return true
 end
+T.kneel, T.canWork, T.deployPoint, T.yawOf = kneel, canWork, deployPoint, yawOf -- shared with barricade.lua
 
 -- Deploy key went down (no modifier held; game thread). A tap deploys / packs / cancels,
 -- holding it (ToggleHoldSeconds) switches Tactical Engineering on or off. Decided in stepHold.
@@ -234,18 +273,24 @@ function T.onKey()
     T.hold = os.clock()
 end
 
-function T.onPerkButton(self)
-    -- Post-hook of Q1_Character:SpawnTurrets. With P_Turret.CD kept at 0 the vanilla body
-    -- returned early (no energy spent, no turret touched); treat it as our button.
-    -- Three quick taps switch Tactical Engineering on / off (the gamepad way; works while off).
+-- Three quick taps on a perk button TE uses (turret or barricade) switch Tactical Engineering
+-- on / off. Works while off. Returns true when this tap was the third.
+function T.tripleTap()
     local now = os.clock()
     T.taps[#T.taps + 1] = now
     while #T.taps > 3 do table.remove(T.taps, 1) end
     if #T.taps == 3 and now - T.taps[1] <= (cfg().TripleTapSeconds or 1.5) then
         T.taps = {}
         T.toggleReq = "toggle"
-        return
+        return true
     end
+    return false
+end
+
+function T.onPerkButton(self)
+    -- Post-hook of Q1_Character:SpawnTurrets. With P_Turret.CD kept at 0 the vanilla body
+    -- returned early (no energy spent, no turret touched); treat it as our button.
+    if T.tripleTap() then return end
     if T.on then T.pressed = true end
 end
 
@@ -260,8 +305,8 @@ function T.toggle(p, want)
     T.on = want
     T.save()
     U.warn("Tactical Engineering " .. (want and "ON" or "OFF"))
-    U.notify(p, want and ("Tactical Engineering ON - tap " .. (T.keyLabel or "Delete") .. " to deploy / pack up")
-        or "Tactical Engineering OFF - vanilla turret perk")
+    U.notify(p, want and ("Tactical Engineering ON - " .. (T.keyLabel and ("tap " .. T.keyLabel .. " or a perk button")
+        or "use your turret / barricade perk buttons")) or "Tactical Engineering OFF - vanilla perks")
 end
 
 local function startWork(p, kind, duration, turretAddr)
@@ -293,7 +338,7 @@ local function startDeploy(p)
     local ok, why = canWork(p)
     if not ok then if why then U.notify(p, why) end return end
     T.setState("DEPLOYING")
-    startWork(p, "deploy", cfg().Player.DeploySeconds)
+    startWork(p, "deploy", T.faster(cfg().Player.DeploySeconds, T.turretStep(p)))
 end
 
 local function finishDeploy(p)
@@ -307,7 +352,8 @@ local function finishDeploy(p)
         return
     end
     local e = T.turrets[a]
-    e.structure = T.structure
+    e.max = T.maxStructure(p)
+    e.structure = e.max * T.structure / 100
     e.ammo = T.ammo
     T.setState("DEPLOYED")
     if cfg().Turret.Rounds > 0 and T.ammo <= 0 then
@@ -329,7 +375,7 @@ local function startPack(p)
     if not ok then if why then U.notify(p, why) end return end
     T.queue(a, "stop") -- make it safe first
     T.setState("PACKING")
-    startWork(p, "pack", cfg().Player.PackSeconds, a)
+    startWork(p, "pack", T.faster(cfg().Player.PackSeconds, T.turretStep(p)), a)
 end
 
 local function finishPack(p)
@@ -341,7 +387,7 @@ local function finishPack(p)
         T.setState(e and "DESTROYED" or "LOST")
         return
     end
-    T.structure = e.structure
+    T.structure = 100 * e.structure / e.max
     if cfg().Turret.Rounds > 0 then T.ammo = math.max(0, e.ammo or 0) end
     e.packed = true
     T.queue(a, "destroy")
@@ -351,6 +397,8 @@ end
 
 local function handlePress(p)
     if T.work then return T.cancelWork(p, "cancelled") end
+    if T.B and T.B.work then return T.B.cancel(p, "cancelled") end
+    if not T.turretUsable and T.state ~= "DEPLOYED" then return U.notify(p, "Requires the Turret perk") end
     if T.state == "CARRIED" then return startDeploy(p) end
     if T.state == "DEPLOYED" then return startPack(p) end
     if T.state == "LOST" or T.state == "DESTROYED" then
@@ -403,11 +451,12 @@ local function onArrival(p)
     if (T.state == "LOST" or T.state == "DESTROYED") and cfg().Player.Resupply == "level" then
         T.resupply(p)
     end
+    if T.B then T.B.onArrival(p) end
 end
 
 function T.resupply(p)
-    T.structure = cfg().Turret.Structure
-    T.ammo = cfg().Turret.Rounds
+    T.structure = 100
+    T.ammo = T.maxRounds(p)
     for a, e in pairs(T.turrets) do if e.kind == "player" then T.turrets[a] = nil end end
     T.setState("CARRIED")
     U.notify(p, "New turret issued - you are carrying it")
@@ -423,7 +472,9 @@ end
 -- "ship": a replacement waits for you at your ship or a station, out of combat, at least
 -- ResupplyMinutes after the loss (real time). A carried turret's ammo is refilled there too.
 local function checkResupply(p)
-    local rounds = cfg().Turret.Rounds
+    if T.B and atShip(p) then T.B.restock(p) end
+    if not T.turretUsable then return end
+    local rounds = T.maxRounds(p)
     if T.state == "CARRIED" and rounds > 0 and T.ammo < rounds and atShip(p) then
         T.ammo = rounds
         T.save()
@@ -469,9 +520,14 @@ local function step(p, now)
         if r == "on" then want = true elseif r == "off" then want = false end
         T.toggle(p, want)
     end
-    if not T.on then T.pressed = false; return end
+    if not T.on then
+        T.pressed = false
+        if T.B then T.B.off(p) end
+        return
+    end
     if T.pressed then T.pressed = false; handlePress(p) end
     stepWork(p, now)
+    if T.B then T.B.step(p, now) end
     if now >= T.nextSlow then
         T.nextSlow = now + 1.0
         checkLost(p, now)
@@ -488,6 +544,8 @@ function T.onPlayerTick(self)
         local pa = pp and U.addr(pp) or nil
         if pa and not G.PlayerClassNames[U.className(pp) or ""] then pa = nil end
         T.playerAddr = pa
+        -- the turret needs the game's turret perk: before you learn it, you have none
+        if pa then T.turretUsable = T.perkLevel(pp, P.PerkTurret) > 0 end
     end
     if T.playerAddr == nil or U.addr(p) ~= T.playerAddr then return end
     if now - T.playerTickAt > 0.5 then
@@ -509,14 +567,15 @@ function T.onRegenerators(self)
     if not T.on or T.playerAddr == nil then return end
     local p = self:get()
     if U.addr(p) ~= T.playerAddr then return end
-    pcall(function() p[P.PerkTurret][P.PerkCD] = 0.0 end)
+    if cfg().BlockVanillaTurretPerk then pcall(function() p[P.PerkTurret][P.PerkCD] = 0.0 end) end
+    if T.B then T.B.pin(p) end
 end
 
 -- Carrying ------------------------------------------------------------------------------
 -- Post-hook of ALS_Base:UpdateDynamicMovementSettings(AllowedGait): ALS has just written
 -- MaxWalkSpeed; scale it while the packed turret is carried.
 function T.onMoveSettings(self)
-    if not T.on or T.state ~= "CARRIED" or T.playerAddr == nil then return end
+    if not T.on or T.state ~= "CARRIED" or T.playerAddr == nil or not T.turretUsable then return end
     local p = self:get()
     if U.addr(p) ~= T.playerAddr then return end
     local f = cfg().Player.CarrySpeed
@@ -531,7 +590,7 @@ end
 
 -- Post-hook of ALS_Base:CanSprint(out CanSprint).
 function T.onCanSprint(self, canSprint)
-    if not T.on or T.state ~= "CARRIED" or T.playerAddr == nil then return end
+    if not T.on or T.state ~= "CARRIED" or T.playerAddr == nil or not T.turretUsable then return end
     if U.addr(self:get()) ~= T.playerAddr then return end
     canSprint:set(false)
 end
@@ -673,7 +732,7 @@ function T.damage(a, cost, t, pawnCtx)
     local now = os.clock()
     e.structure = e.structure - cost
     e.hitAt = now
-    if e.kind == "player" then T.structure = math.max(0, e.structure) end
+    if e.kind == "player" then T.structure = math.max(0, 100 * e.structure / e.max) end
     if e.structure > 0 then
         -- one notice per threshold crossed (75 / 50 / 25 %): the HUD warning has an alert sound
         local pct = 100 * e.structure / e.max

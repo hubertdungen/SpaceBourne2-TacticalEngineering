@@ -9,24 +9,26 @@ return {
     -- false = the mod does nothing at all (not even the on/off key).
     Enabled = true,
 
-    -- Tactical Engineering starts ON. In game, on foot, HOLD the deploy key for
-    -- ToggleHoldSeconds to switch it off or on (remembered between sessions).
-    -- While off, the vanilla turret perk works as usual. false = start off.
+    -- Tactical Engineering starts ON. While off, the vanilla perks work as usual. false = start off.
     StartOn = true,
-    ToggleHoldSeconds = 2.0,
-    -- Gamepad: tap the turret perk button 3 times within this many seconds to switch on / off.
+    -- Tap the turret or barricade perk button 3 times within this many seconds to switch
+    -- Tactical Engineering off / on (remembered between sessions). Works on keyboard and gamepad.
     TripleTapSeconds = 1.5,
 
-    -- Deploy key. Tap: deploy your turret, pack it up (when you are next to it) or cancel.
-    -- Any UE4SS key name (DEL = Delete, F11, NUM_ZERO, ...), optionally with Shift: "Shift+DEL".
-    -- "" = no key. Delete is unbound in the game. Keys the game uses itself (F1-F6, F8 quick load,
-    -- F10, F11 fullscreen, F12) are refused without a modifier. The plain key does nothing while Shift, Ctrl or
-    -- Alt is held, so Shift+Delete stays free for other mods (realism set key plan).
-    DeployKey = "DEL",
-
-    -- The vanilla turret perk's button also deploys / packs (works with a gamepad).
-    -- Needs the turret perk learned and placed in an action slot.
+    -- Controls: the game's own perk buttons, wherever you put the perks (action slots).
+    -- Turret perk button: deploy your turret, pack it up (next to it) or cancel.
+    -- Barricade perk button: build a barricade, pack one up (next to it) or cancel.
+    -- Each needs its perk learned and in an action slot, as in vanilla.
     UseTurretPerkButton = true,
+
+    -- Optional extra key for the turret (still needs the turret perk learned). "" = none (default).
+    -- Any UE4SS key name, e.g. "DEL" (Delete, unbound in the game), optionally with Shift: "Shift+DEL".
+    -- Tap: same as the turret perk button; hold ToggleHoldSeconds: Tactical Engineering on / off.
+    -- Keys the game uses itself (F1-F6, F8 quick load, F10, F11 fullscreen, F12) are refused without a
+    -- modifier. The plain key does nothing while Shift, Ctrl or Alt is held (realism set key plan:
+    -- Shift+Delete belongs to Gear Without Levels).
+    DeployKey = "",
+    ToggleHoldSeconds = 2.0,
 
     -- While Tactical Engineering is on, the vanilla instant turret perk is switched off
     -- (it would explode every turret of its class, including yours). Leave this on.
@@ -48,7 +50,7 @@ return {
     },
 
     Turret = {
-        Scale           = 0.8,     -- size vs the vanilla perk turret
+        Scale           = 0.6,     -- size vs the vanilla perk turret (rounds still leave from its muzzle)
         Structure       = 100,     -- durability points
         -- Structure lost per hit, by who fired. Small arms chip it; explosives and heavy weapons wreck it.
         HitCost = {
@@ -62,13 +64,39 @@ return {
         Rounds          = 300,
     },
 
-    -- Noise: setting up / packing up is metal work that nearby enemies hear; a firing turret is
-    -- heard much farther. Unaware enemies in range turn to the noise (the game's own alert).
-    -- The events are also shared with other mods (Silent Ops) as "SB2R_Noise".
+    -- Perk levels: each level of the game's turret perk above 1 (and of the barricade perk, for
+    -- barricades) gives a small, practical edge. Level 3 = two steps. 0 = no bonus.
+    Levels = {
+        SetupFaster    = 0.15, -- deploy / pack / build time -15 % per step (6 s -> 5.1 s -> 4.2 s)
+        ExtraRounds    = 100,  -- turret rounds +100 per step (300 -> 400 -> 500)
+        ExtraStructure = 0.20, -- turret and barricade structure +20 % per step
+    },
+
+    -- Barricades: the game's barricade perk (an energy-shield wall) as field engineering.
+    -- Its perk button builds one where vanilla puts it, or packs up your nearest one.
+    -- Needs the barricade perk learned and in an action slot.
+    Barricades = {
+        Enabled       = true,
+        BuildSeconds  = 4.0,  -- kneeling, can't move
+        PackSeconds   = 3.0,
+        PackRange     = 300,  -- cm
+        Carried       = 1,    -- barricades you carry at perk level 1 ...
+        ExtraPerLevel = 1,    -- ... plus this per level above 1. Restocked at your ship, out of combat.
+        Structure     = 150,  -- enemy rounds wear it down (Turret.HitCost); at 0 it collapses
+    },
+
+    -- Noise: setting up / packing up (turret or barricade) is metal work that nearby enemies hear;
+    -- a firing turret is heard much farther. Unaware enemies in range go on alert (the game's own
+    -- alert, so HTR's alert sight range applies) and come to search around the noise.
+    -- With Silent Ops on, Silent Ops handles all of this with its own suspicion -> search -> alert:
+    -- the events are shared with it as "SB2R_Noise".
     Noise = {
         WorkRadius   = 1500, -- cm
         FireRadius   = 6000, -- cm
         AlertEnemies = true,
+        Search       = true, -- alerted enemies walk to a point near the noise
+        SearchRadius = 400,  -- cm around the noise
+        SearchSeconds = 12,  -- then they go back to their own behaviour (still alert)
     },
 
     Enemies = {

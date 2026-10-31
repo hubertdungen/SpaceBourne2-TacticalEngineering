@@ -7,12 +7,14 @@ from the original plan, the text says so.
 Name history: this started as "Engineering Turrets (ET)". The release name is **Tactical Engineering**,
 the mod folder is `TacticalEngineering`, and its Lua modules live in `te/`.
 
-**0.1.1 in short** (details in the sections below):
+**0.2.0 in short** (details in the sections below; 0.2 additions in §8):
 - **On/off**: on by default since 0.1.1 (`StartOn = true`; the user's rule: a mod you install should
-  come active). Holding the deploy key (Delete) for 2 s switches it on or off, and the
-  setting is remembered in `te_state.txt`. The shared key plan gives this mod only Delete, so it needs
-  no extra key.
-- **Deploy key**: a tap deploys, packs or cancels. The vanilla turret perk button does the same.
+  come active). Three quick taps on the turret or barricade perk button switch it off or on, and the
+  setting is remembered in `te_state.txt`.
+- **Controls** (since 0.2, the user's rule: no invented keys): the game's perk buttons only. The turret
+  perk button deploys, packs or cancels; the barricade perk button builds, packs or cancels. Delete
+  (0.1's key) is now an optional `DeployKey`, unset by default; the shared key plan still reserves it.
+- **Perk levels** and **barricades**: §8.
 - **Resupply** (`"ship"`): at your ship (`WhereIsPlayer` 0) or a station (4/5), out of combat, and
   `ResupplyMinutes` (5) after the loss. The minutes are real minutes, kept across restarts.
 - **Ally engineers**: implemented and tested with the squad, but off by default.
@@ -466,20 +468,73 @@ about 3 s, and deploys. Its turret has `owner.MaxHP / 10` HP and becomes destruc
 
 ---------------------------------------------------------------------------------------------------
 
-## 8. Barricades and other perks (later phases)
+## 8. 0.2: perk levels and barricades (the user's ideas, 2026-10-31)
 
-**Barricade (`Barricde_C`)**: an energy-shield wall (`P_GunShield_Fast`), with a `Delay(LifeTime)` and then
-destruction.
+### 8.1 Perk levels
 
-- **Same pattern as the turret**: block the vanilla perk (keep `BarrierCD = true`), deploy our own with a long
-  `LifeTime` after `BuildSeconds`, carry one, and lose it at level end.
-- **Damage**: `Barricde_C` has no damage events, so ET must catch NPC rounds in the shooters' projectile-hit
-  hooks. Those are the same functions HTR hooks (`G.NpcProjectileHits`).
-- **Per-shot cost**: one address compare of `OutHitResult.HitActor` against our few barricades. It never does
-  a class lookup on the per-shot path.
+What vanilla levels change (§1.1): the turret perk's level only shortens the cooldown (30/25/20 s),
+lowers the energy cost (80/60/40 %) and lengthens the lifetime (25/30/40 s). TE removes all three, so
+without a bonus a higher level would mean nothing. 0.2 gives small, practical steps instead. The level
+is read from `P_Turret.Level` (`P_Barricade.Level` for barricades). Level 1 or not learned is the base,
+level 2 is one step and level 3 two.
 
-**Trip mines** (`PerkMineSpawner_C`, not dumped yet) and **energy perks** (front shield, area force) are out of
-scope. They are not engineering.
+| per step | turret | barricade |
+|---|---|---|
+| `Levels.SetupFaster` 15 % | deploy 6 → 5.1 → 4.2 s, pack 5 → 4.25 → 3.5 s | build 4 → 3.4 → 2.8 s, pack 3 → 2.55 → 2.1 s |
+| `Levels.ExtraRounds` +100 | 300 → 400 → 500 rounds (refilled at the ship) | — |
+| `Levels.ExtraStructure` +20 % | structure 100 → 120 → 140 | 150 → 180 → 210 |
+| `Barricades.ExtraPerLevel` +1 | — | carried 1 → 2 → 3 |
+
+Not changed: tracking and accuracy. The 1 s target scan and the ±0.005 spread live in the turret's
+Blueprint; faking them in Lua would cost per-shot work for little gain.
+
+### 8.2 Barricades
+
+**Vanilla** (`Barricde_C`): an energy-shield wall (`P_GunShield_Fast`, two collision meshes), put up instantly
+at `BarricadeLocation` for 10/15/20 s (`Delay(LifeTime)`, then destroy). `ActiavateBarricate` (sic) needs
+`P_Barricade.Level > 0`, the `BarrierCD` flag clear and 60 % energy. It has no damage events.
+
+**0.2:**
+- **Same input.** The barricade perk button. While TE is on, `BarrierCD` is kept set in the `Regenerators`
+  post-hook, so vanilla returns early. The post-hook of `ActiavateBarricate` is our button. Without the perk
+  learned, there are no barricades (as in vanilla); no extra key is used.
+- **Building takes time.** You kneel and can't move for `BuildSeconds`; moving cancels. It is metal work:
+  `Noise.WorkRadius`, shared as `SB2R_Noise` (Silent Ops).
+- **Pack it up.** The button next to one of yours (`PackRange`) packs it in `PackSeconds`. A packed shield
+  recharges: it comes back at full strength.
+- **Limited.** You carry `Carried` (+1 per level step). They are restocked at your ship or a station, out of
+  combat. One left standing when you leave the area is lost.
+- **Destructible.** The shooters' `OnProjectileHit` post-hooks (the same functions HTR hooks) compare
+  `OutHitResult.Actor` with our barricades' addresses: one table check per enemy round while a barricade
+  stands, none otherwise. Each hit costs `Turret.HitCost`; at 0 it collapses (destroyed). A notice at 50 %.
+- **Long life.** Spawned like the turret: `LifeTime` 1e7 on the class default object, then `SpawnActor`.
+
+**The perks are required** (the user's rule): no barricades without `P_Barricade.Level > 0`, no
+turret without `P_Turret.Level > 0`, also with `DeployKey` ("Requires the Turret / Barricade perk").
+Without the turret perk you own no turret: no carry slowdown, no ammo messages (`T.turretUsable`,
+read once a second). "In an action slot" can't be read cheaply; the perk buttons imply it.
+
+### 8.3 Enemies search for the noise (the user's idea)
+
+Silent Ops off (or older than 0.2): an unaware enemy that hears TE's noise (deploy, pack, barricade
+work, turret fire) gets the vanilla alert (`CheckForFirstFocus`: alert / in combat, so HTR's alert
+sight range applies), then searches: `BrainComponent:StopLogic`, focal point and `MoveToLocation` to
+a point within `Noise.SearchRadius` (4 m) of the noise. That is Silent Ops' method. The search ends
+when it detects someone, engages a turret, dies, after `Noise.SearchSeconds` (12), or when TE is
+switched off; then `RestartLogic`. Without `StopLogic` the behaviour tree called it back within 2 s
+(seen in game).
+
+Silent Ops 0.2+ on (`SilentOps_On`): TE does none of this. Silent Ops hears turret setup (turret
+`BeginPlay`, 12 m, "suspect") and fire ("hunt") through its own hooks, and packing from
+`SB2R_Noise` ("suspect"). It does not read `barricade` yet. Test: one pack at 6 m raised the meter to
+0.29, under `SuspiciousAt` 0.35: no look, no search. Proposed to the Silent Ops session: read
+`barricade` too, and make TE work noise "search" (or a bigger bump). The turret's structure is now kept in % of its maximum, so a carried turret at full
+strength deploys at full strength after a level-up.
+
+**Cover for NPCs: not in 0.2.** The game's AI has no cover search to plug a barricade into. The wall still
+stops rounds physically, for anyone standing behind it.
+
+**Trip mines** and **energy perks** (front shield, area force) stay out of scope.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -751,6 +806,55 @@ it off.
 
 Checked in game on 2026-10-31 (HTR 0.4.8 installed), fresh install with no `te_state.txt`: the mod loads
 ON, and a real Delete tap deploys the turret (6 s, then "Turret deployed - 300 rounds"). No errors.
+
+### 0.2.0 test (2026-10-31, HTR 0.4.8 installed, one launch)
+
+Test save: turret perk level 2, barricade perk not learned; set to 3 and 2 with the dev runner.
+- `ActiavateBarricate()` with TE on: `BarrierCD` read `true` (pinned), no vanilla wall, energy 108.9 →
+  108.9. TE built one in 3.4 s ("3 s"), `Barricde_C` with `LifeTime` 1e7, structure 180.
+- Enemy rounds: the shooters' `OnProjectileHit` reports `Barricde_C` / `BarricadeCollision1` when the
+  wall is in the line of fire, so it does stop them. 18 hits took it from 180 to 126 (3 each). With the
+  structure set to 5, the next hit collapsed it: "half strength" and "collapsed" notices, the actor gone
+  (FindAllOf keeps listing it until garbage collection, about 30-45 s).
+- Pack: 2.55 s ("3 s"), carried back to 2. One 46 ms player-tick hitch at the pack (the actor's destroy).
+- Turret at perk level 3: "Deploying turret - 4 s" (4.2 s), "Turret deployed - 500 rounds".
+- Hook cost: "barricade hit" 29 calls in 30 s = 1 ms in a firefight. No errors.
+- Found and fixed: on the test map (counted as "ship") the restock refilled right after a build;
+  restock now counts barricades still standing.
+
+Changed after that test, at the user's request: perk buttons only (no Delete by default), 3 taps on the
+barricade button too, no turret carried without the turret perk, structure in %. Also fixed: switching
+TE off now clears `BarrierCD` once, or the vanilla barricade would stay "cooling down".
+
+**Final check of the release build** (same day, second launch, default config):
+- "deploy key nil": no key bound; `turretUsable` true (turret perk learned).
+- 3 calls of the barricade perk → "Tactical Engineering OFF"; `BarrierCD` false; the vanilla perk then
+  works as vanilla (energy 108.9 → 43.6, a wall with `LifeTime` 15 at level 2).
+- 3 more → "Tactical Engineering ON", `BarrierCD` pinned again.
+- The turret perk call → "Deploying turret - 4 s" → "Turret deployed - 500 rounds". No errors.
+
+**Noise search and perk requirement** (three more launches, HTR 0.4.8):
+- Silent Ops off: an unaware enemy 11–14 m behind "heard deploy: alert, searching". Without
+  `StopLogic` it walked 1.6 m and turned back; with it, 11 → 7.6 m toward the noise, looked around,
+  "search over" after 12 s, back to its routine.
+- The user's install has Silent Ops 0.1.0 (no `SilentOps_On`, no turret hooks): TE searched, Silent Ops
+  stayed calm. No double alert.
+- Silent Ops current build (0.3.0-dev, from its session's branch; installed only for the test, the
+  user's 0.1.0 restored and hash-checked): `SilentOps_On` = true, TE heard nothing. Silent Ops: deploy at
+  16 m unheard (its radius is 12 m); "heard turret pack at 6 m", meter 0.29 (no look).
+- Both perks at level 0: "Requires the Turret perk", "Requires the Barricade perk"; a deployed turret
+  can still be packed.
+
+**Turret scale 0.6** (the user's request; was 0.8). `JustShoot` spawns its rounds with
+`SpawnProjectileSingleByChannel` at `self.Muzzle:K2_GetComponentLocation()` (read), a component that
+follows the actor scale. In game: the muzzle was 96 cm from the root (dz 82) at 0.6 and 160 cm (dz 136)
+at 1.0, a ratio of 0.60. The root stayed at the player's feet height (-264), so the base doesn't sink.
+The turret fired and killed the enemies; invulnerable enemies then engaged it and their rounds took it
+from 140 to 0 in about 4 s (notices at 49 % and 25 %). One launch, no errors.
+
+**Not checked in game:** the real slot press of the barricade perk. The test called
+`ActiavateBarricate()` directly; the bytecode shows `UsePerkAtSlot` calls it with no check of its own
+(§1.1), the same path the turret perk button uses (verified with the real button in 0.1.0).
 
 Still not tested in game: companion engineers, the rare enemy engineers, the HTR 0.4.8 `turret_light`
 caliber, and Silent Ops 0.2 hearing the turret.

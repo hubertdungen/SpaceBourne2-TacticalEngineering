@@ -1,25 +1,27 @@
 [size=6][b]Tactical Engineering — realistic deployable turrets for SpaceBourne 2[/b][/size]
 
-The turret perk stops being an instant MMO spawn and becomes real engineering. You carry one heavy turret, kneel to set it up and to pack it up, and lose it if you leave it behind. Once it is deployed it does the job, and the enemy treats it as a threat: they shoot back until it breaks.
+The turret perk stops being an instant MMO spawn and becomes real engineering. You carry one heavy turret, kneel to set it up and to pack it up, and lose it if you leave it behind. Once it is deployed it does the job, and the enemy treats it as a threat: they shoot back until it breaks. The barricade perk gets the same treatment, and higher perk levels make you a better engineer. It uses the game's own perk buttons: no extra keys.
 
-Version 0.1.1 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering]GitHub[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
+Version 0.2.0 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods page[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
 
 [line]
 [size=5][b]What it does[/b][/size]
 
 [list]
-[*][b]Deploying takes time.[/b] Tap [b]Delete[/b]: you kneel and can't move for 6 seconds, then the turret stands 2 m in front of you, unfolds and opens fire. While you work, you are exposed.
+[*][b]Deploying takes time.[/b] Press your [b]turret perk button[/b]: you kneel and can't move for 6 seconds, then the turret stands 2 m in front of you, unfolds and opens fire. While you work, you are exposed.
 [*][b]It stays.[/b] No 25–40 second lifetime and no self-destruct. It keeps firing until you pack it up, it is destroyed, or you leave it behind.
-[*][b]Packing up takes time too.[/b] Tap [b]Delete[/b] next to it: it stops firing at once, and you kneel for 5 seconds.
+[*][b]Packing up takes time too.[/b] Press the turret perk button next to it: it stops firing at once, and you kneel for 5 seconds.
 [*][b]One turret, and it is heavy.[/b] Packed, you carry it: you walk at 80 % speed and can't sprint. Damage stays with the turret.
 [*][b]Leave it behind and it is gone.[/b] A turret still deployed when you leave the area is lost. So is a destroyed one. A replacement waits for you at your ship or a station, out of combat, 5 minutes after the loss.
-[*][b]Smaller, not weaker.[/b] It is 80 % the size of the vanilla perk turret, with the same belt-fed gun: 10 rounds/s at enemies within 100 m in line of sight, 3–5 s reloads between belts.
+[*][b]Smaller, not weaker.[/b] It is 60 % the size of the vanilla perk turret, with the same belt-fed gun: 10 rounds/s at enemies within 100 m in line of sight, 3–5 s reloads between belts.
 [*][b]Limited ammo.[/b] It carries 300 rounds. The ammo stays with it when you pack it up, and it is refilled from your ship: in space or on a station, out of combat, while you carry the turret. Empty, it stops firing.
-[*][b]It makes noise.[/b] Setting it up or packing it up is metal work that enemies within about 15 m hear. A firing turret is heard about 60 m away. Unaware enemies turn to the noise.
+[*][b]It makes noise.[/b] Setting it up or packing it up (a barricade too) is metal work that enemies within about 15 m hear. A firing turret is heard about 60 m away. Unaware enemies go on high alert and come to search around the noise for up to 12 seconds; once alert, HTR's longer alert sight range applies. With [url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]Silent Ops[/url] 0.2 or later, Silent Ops handles the noise instead, with its own suspicion → search → alert: never both.
 [*][b]It can be destroyed.[/b] Rifle hits chip it, snipers and heavy weapons hurt, explosions wreck it. A destroyed turret stays as a dead wreck.
 [*][b]Enemies fight back.[/b] Enemies hit by a turret, or near one that is firing, turn and shoot it: up to 3 at a time, for a few seconds, then they choose again between you and the turret.
+[*][b]Barricades (new in 0.2).[/b] The barricade perk's energy-shield wall is no longer instant and short-lived. Press the barricade perk button: you kneel for 4 seconds, and the wall stays until you pack it up (3 seconds, next to it) or leave the area. You carry 1 (2 at perk level 2, 3 at level 3), restocked at your ship. It stops enemy rounds, which wear it down until it collapses. Building is noisy, like the turret.
+[*][b]Perk levels matter (new in 0.2).[/b] Each level of the turret or barricade perk above 1 sets up 15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500). Small steps, no MMO scaling.
 [*][b]Ally engineers (optional).[/b] Squad soldiers, including the game's unused "Turretci" role, and companions can stop in a fight and deploy a turret of their own.
-[*][b]On by default.[/b] Installed, it is on. Hold Delete for 2 seconds to switch it off (the vanilla turret perk comes back) or on again.
+[*][b]On by default.[/b] Installed, it is on. Tap the turret or barricade perk button 3 times quickly to switch it off (the vanilla perks come back) or on again.
 [/list]
 
 [line]
@@ -28,7 +30,7 @@ Version 0.1.1 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngin
 [list]
 [*]SpaceBourne 2 (Steam).
 [*][url=https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1]UE4SS 3.0.1[/url]. Installing HTR installs it too.
-[*]The turret perk is optional: Delete works without it. If the perk is in an action slot, its button deploys and packs too, which also works on a gamepad.
+[*][b]The game's perks.[/b] The turret needs the turret perk, barricades need the barricade perk: learned and in an action slot, as in vanilla. Before you learn a perk, you don't have that equipment (no carry weight either); pressing for it shows "Requires the Turret perk" / "Requires the Barricade perk". Higher perk levels give the bonuses above.
 [*]Recommended: [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url] 0.4.2 or later; 0.4.8 or later gives the turret its own light caliber. HTR handles the ballistics of the turret's rounds and of the rounds fired at it. Tactical Engineering costs no suit energy and leaves other perks' cooldowns alone, so HTR's slower perk recharge applies unchanged.
 [/list]
 
@@ -36,9 +38,9 @@ Version 0.1.1 · [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngin
 [size=5][b]Install[/b][/size]
 
 [list=1]
-[*]Download TacticalEngineering-0.1.1.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
+[*]Download TacticalEngineering-0.2.0.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
 [*]Extract it into the game folder (...\steamapps\common\SpaceBourne 2\). It adds SB2\Binaries\Win64\Mods\TacticalEngineering\; the enabled.txt inside turns it on.
-[*]That's it: Tactical Engineering is on in game. To switch it off, hold Delete for 2 seconds on foot (remembered between sessions). StartOn = false in scripts\config.lua makes a fresh install start off.
+[*]That's it: Tactical Engineering is on in game. To switch it off, tap the turret or barricade perk button 3 times quickly (remembered between sessions). StartOn = false in scripts\config.lua makes a fresh install start off.
 [/list]
 
 Manual install: copy the TacticalEngineering folder from this repository into SpaceBourne 2\SB2\Binaries\Win64\Mods\.
@@ -46,21 +48,22 @@ Manual install: copy the TacticalEngineering folder from this repository into Sp
 Uninstall: delete SB2\Binaries\Win64\Mods\TacticalEngineering. Tactical Engineering never writes to your saves. It keeps its own state (on/off, your turret) in te_state.txt in its folder.
 
 [line]
-[size=5][b]Keys (on foot)[/b][/size]
+[size=5][b]Controls (on foot)[/b][/size]
 
-[code]
-Key                               Action
-Delete (tap)                      Carrying: deploy. Next to your turret: pack it up. While working: cancel.
-Delete (hold 2 s)                 Tactical Engineering on / off
-Turret perk button                Same as a Delete tap (if the turret perk is in an action slot)
-Turret perk button, 3 quick taps  Tactical Engineering on / off (the gamepad way). While it is off, the first tap is still the vanilla perk.
-[/code]
+The game's own perk buttons, in whatever action slot you put the perks. No new keys.
 
-Each key press shows one short message on the HUD, without the game's "tu-tu-tu" alarm. Like HTR, Tactical Engineering mutes that one sound for 2 seconds around its own messages. There is no countdown, and damage to your turret is reported only at 75, 50 and 25 %.
+[list]
+[*][b]Turret perk button[/b]: Carrying: deploy. Next to your turret: pack it up. While working: cancel.
+[*][b]Barricade perk button[/b]: Build a barricade. Next to one of yours: pack it up. While working: cancel.
+[*][b]Either one, 3 quick taps[/b]: Switches the [b]whole mod[/b] on / off (on by default). While it is off, the first taps are still the vanilla perk.
+[*][b]Ally engineers[/b]: No button. They are a config option, Allies.Engineers, off by default.
+[/list]
 
-Delete is unbound in the game. The plain key does nothing while Shift, Ctrl or Alt is held, so [b]Shift+Delete[/b] stays free for Gear Without Levels. The key can be changed in scripts\config.lua; the game's own keys (F1–F6, F8, F10, F11, F12) are refused without a modifier.
+Each press shows one short message on the HUD, without the game's "tu-tu-tu" alarm. Like HTR, Tactical Engineering mutes that one sound for 2 seconds around its own messages. There is no countdown, and damage to your turret is reported only at 75, 50 and 25 %.
 
-While Tactical Engineering is on, the vanilla instant turret perk is switched off: its icon shows as cooling down. Switch Tactical Engineering off, and the vanilla perk works as before.
+[b]Optional extra key:[/b] DeployKey in scripts\config.lua (none by default; 0.1 used Delete). A tap acts like the turret perk button (the turret perk is still needed); holding it 2 s switches the whole mod on / off. The plain key does nothing while Shift, Ctrl or Alt is held, so [b]Shift+Delete[/b] stays free for Gear Without Levels; the game's own keys (F1–F6, F8, F10, F11, F12) are refused without a modifier.
+
+While Tactical Engineering is on, the vanilla instant turret and barricade perks are switched off: their icons show as cooling down. Switch Tactical Engineering off, and they work as before.
 
 [line]
 [size=5][b]Settings[/b][/size]
@@ -74,13 +77,16 @@ Edit Mods\TacticalEngineering\scripts\config.lua. Every line is optional. The ma
     - CarrySpeed (0.8) and CarryNoSprint;
     - Resupply: "ship", "level" or "never", and ResupplyMinutes.
 [*]Turret:
-    - Scale (0.8);
+    - Scale (0.6);
     - Structure (100) and HitCost per attacker type;
     - DestroyedEffect: "wreck", or "explode" (the vanilla blast);
     - Rounds (300): 0 = unlimited.
+[*]Levels (per perk level above 1): SetupFaster (15 %), ExtraRounds (100), ExtraStructure (20 %).
+[*]Barricades: Enabled, BuildSeconds / PackSeconds (4 / 3), PackRange, Carried (1) + ExtraPerLevel (1), Structure (150).
 [*]Noise:
     - WorkRadius (15 m) and FireRadius (60 m);
-    - AlertEnemies.
+    - AlertEnemies;
+    - Search, SearchRadius (4 m around the noise) and SearchSeconds (12).
 [/list]
 
 The noise events are also shared with other mods (for Silent Ops) through the UE4SS shared variable SB2R_Noise.
@@ -98,6 +104,17 @@ The noise events are also shared with other mods (for Silent Ops) through the UE
 
 [line]
 [size=5][b]Status and known limits[/b][/size]
+
+0.2 tested in game on 2026-10-31, with HTR 0.4.8:
+[list]
+[*]the barricade perk call: no vanilla wall, no energy spent; a 3.4 s build at perk level 2, no lifetime limit;
+[*]enemy rounds stopped by the wall and wearing it down; the collapse; packing it up;
+[*]turret perk level 3: a 4.2 s deploy and 500 rounds;
+[*]the turret at 60 %: rounds leave from its muzzle (the muzzle point scales with it: 96 cm from the base vs 160 cm at full size), its base stays on the ground, and enemy rounds still hit it;
+[*]only the perk buttons; 3 taps on the barricade button switch the mod off and on, and the vanilla barricade works again while it is off; "Requires the Turret / Barricade perk" without them;
+[*]the deploy noise heard by an unaware enemy 12–14 m behind: alert, it walks toward the noise, looks around, and goes back to its routine 12 s later;
+[*]with Silent Ops (current build): Tactical Engineering stays out, and Silent Ops hears the packing ("heard turret pack at 6 m").
+[/list]
 
 Tested in game on 2026-10-31, with HTR 0.4.7:
 [list]
@@ -133,10 +150,12 @@ Not tested yet:
 Known limits:
 
 [list]
-[*][b]Barricades stay vanilla for now.[/b] The game's barricade perk (an energy-shield wall) keeps working as in vanilla: instant, short-lived. Turning it into real engineering (build time, carried, destructible) is planned for a later version.
+[*][b]NPCs don't take cover behind barricades.[/b] The game's AI has no cover search to use them. The wall still stops rounds for anyone standing behind it.
+[*][b]Only enemy rounds wear barricades down.[/b] Grenades and other blasts don't damage them.
+[*][b]With Silent Ops, work noise is mild for now.[/b] Silent Ops hears a turret being set up (12 m), packed and firing, but one setup or pack only adds a little suspicion, and it doesn't read barricade work yet. Tuning that is on the Silent Ops side.
 [*][b]No new animations.[/b] Kneeling is the normal crouch, and the turret uses the vanilla perk's unfold animation. The packed turret isn't visible on your back.
 [*][b]Enemies notice it, they don't see it.[/b] The game's enemies only "see" people. They turn on a turret once it shoots them or fires near them, not by spotting a silent one.
-[*][b]One short hitch per session.[/b] The first deploy, and the first enemy that turns on a turret, can cost one frame of about 50 ms.
+[*][b]Short hitches.[/b] The first deploy of a session, the first enemy that turns on a turret, and packing up a barricade can each cost one frame of about 50 ms.
 [*][b]The state is not per save.[/b] It is per game install: loading an older save keeps your current turret state.
 [/list]
 
@@ -145,18 +164,17 @@ Design notes, research and the full test log: [url=https://github.com/hubertdung
 [line]
 [size=5][b]Part of the SpaceBourne 2 realism set[/b][/size]
 
-Separate mods that work alone or together:
+Separate mods that work alone or together. To install them all at once, use the installer: [url=https://github.com/hubertdungen/SpaceBourne2-Realism]SpaceBourne 2 Realism[/url] ([url=https://www.nexusmods.com/spacebourne2/mods/11]Nexus[/url]).
 
-[code]
-Mod                                                                     Status
-Hardcore Tactical Realism (HTR) — realistic ballistics and tactical AI  released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/4) · [Steam discussion](https://steamcommunity.com/app/1646850/discussions/0/573805072991123580)
-Silent Ops — realistic stealth                                          released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-SilentOps) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/6)
-Split Controls — separate invert for ship and on foot                   released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-SplitControls) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/5)
-Gear Without Levels — use gear regardless of level                      released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-GearWithoutLevels) · [Nexus Mods](https://www.nexusmods.com/spacebourne2/mods/7)
-Tactical Engineering — deployable turrets (this mod)                    released: [GitHub](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering)
-Faction Power                                                           coming
-Tactical First Person                                                   coming
-[/code]
+[list]
+[*][b]Hardcore Tactical Realism (HTR) — realistic ballistics and tactical AI[/b]: released: [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]GitHub[/url] · [url=https://www.nexusmods.com/spacebourne2/mods/4]Nexus Mods[/url] · [url=https://steamcommunity.com/app/1646850/discussions/0/573805072991123580]Steam discussion[/url]
+[*][b]Silent Ops — realistic stealth[/b]: released: [url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]GitHub[/url] · [url=https://www.nexusmods.com/spacebourne2/mods/6]Nexus Mods[/url]
+[*][b]Split Controls — separate invert for ship and on foot[/b]: released: [url=https://github.com/hubertdungen/SpaceBourne2-SplitControls]GitHub[/url] · [url=https://www.nexusmods.com/spacebourne2/mods/5]Nexus Mods[/url]
+[*][b]Gear Without Levels — use gear regardless of level[/b]: released: [url=https://github.com/hubertdungen/SpaceBourne2-GearWithoutLevels]GitHub[/url] · [url=https://www.nexusmods.com/spacebourne2/mods/7]Nexus Mods[/url]
+[*][b]Tactical Engineering — deployable turrets (this mod)[/b]: released: [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering]GitHub[/url] · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods[/url]
+[*][b]Faction Power[/b]: coming
+[*][b]Tactical First Person[/b]: coming
+[/list]
 
 [line]
 [size=5][b]Thanks[/b][/size]
