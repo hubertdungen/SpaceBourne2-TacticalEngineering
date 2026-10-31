@@ -1,0 +1,4 @@
+# files the mod writes in the game folder
+te.log
+te_state.txt
+te_cmd.txt
