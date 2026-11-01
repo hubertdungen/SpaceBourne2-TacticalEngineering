@@ -109,6 +109,20 @@ are refused without a modifier.
 While Tactical Engineering is on, the vanilla instant turret and barricade perks are switched off:
 their icons show as cooling down. Switch Tactical Engineering off, and they work as before.
 
+### Ally engineers
+
+- **Who:** soldiers of your ground squad (the ones you order with F1 / F2 / F5 on foot: fire at
+  will, cover, get out) and your companions. Each one is picked at random the first time Tactical
+  Engineering sees it in a session: about 1 squad soldier in 10 and 1 companion in 7 is an engineer.
+  The game also has a "Turretci" (turret operator) squad role, but its squad never uses it; if a
+  game update ever does, those soldiers are always engineers.
+- **How to get them:** there is no special hire. Get a squad or a companion the way the game gives
+  them; Tactical Engineering doesn't change that. The exact recruiting menus are not confirmed here.
+- **What they do:** in a fight, an engineer stops for 8 seconds and sets up its own turret where it
+  stands. At most 2 ally turrets per area; they stay until you leave it.
+- **Tip:** a bigger squad means more chances of an engineer. 4 quick perk-button taps switch them
+  off or on.
+
 ## Settings
 
 Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The main ones:
