@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.2 — 2026-11-06
+
+- **No more ghost turrets.** A turret that stops responding (seen mid-dungeon: it kept its firing
+  effect without shooting, and the mod said you had no turret) is now silenced. Close to you, it is
+  recovered and you carry it again, with its ammo and damage; far away, it is removed and lost.
+  With no turret, pressing the turret perk button next to one the mod lost track of recovers it.
+  A stopped or empty turret also loses its firing effect.
+- **Ammo shown when packing.** Packing up keeps the turret's ammo (it always did); the message now
+  shows it: "Turret packed - you are carrying it (N rounds)".
+
 ## 0.2.1 — 2026-10-31
 
 - **Ally engineers on by default, with an in-game switch.** Tap the turret or barricade perk button

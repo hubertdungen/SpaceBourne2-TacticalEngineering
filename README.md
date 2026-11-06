@@ -8,7 +8,7 @@ deployed it does the job, and the enemy treats it as a threat: they shoot back u
 The barricade perk gets the same treatment, and higher perk levels make you a better engineer.
 It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.1 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
+Version 0.2.2 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
 works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism).
 
 ## What it does
@@ -71,7 +71,7 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 
 ## Install
 
-1. Download `TacticalEngineering-0.2.1.zip` from the
+1. Download `TacticalEngineering-0.2.2.zip` from the
    [releases](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases).
 2. Extract it into the game folder (`...\steamapps\common\SpaceBourne 2\`). It adds
    `SB2\Binaries\Win64\Mods\TacticalEngineering\`; the `enabled.txt` inside turns it on.
@@ -177,6 +177,14 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
 
 <!-- nexus:skip -->
 ## Test status
+
+0.2.2 tested in game on 2026-11-06, with HTR 0.4.12:
+- pack and redeploy keep the turret's rounds and damage ("carrying it (394 rounds)", then
+  "deployed - 394 rounds");
+- a turret cut off mid-burst is recovered after 3 s with its rounds; 40 m away it is lost and removed;
+- a perk turret the mod doesn't know is silenced, then recovered by a press next to it (or removed if
+  you carry your own);
+- an empty turret switches off, with no muzzle flash or tracer.
 
 0.2.1 tested in game on 2026-10-31, with HTR 0.4.8:
 - 4 quick perk-button taps switching the ally engineers off and on, 3 taps the whole mod;

@@ -15,7 +15,7 @@
   Design notes and the test log: DESIGN.md in the repository.
 ]]
 
-local VERSION = "0.2.1"
+local VERSION = "0.2.2"
 
 local U = require("te.util")
 

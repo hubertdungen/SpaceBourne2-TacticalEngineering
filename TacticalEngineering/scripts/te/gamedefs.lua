@@ -27,6 +27,7 @@ G.GameplayStatics = "/Script/Engine.Default__GameplayStatics"
 -- Short class names (GetClass():GetFName()) -------------------------------------
 G.PlayerClassNames     = { Q1_Character_C = true }
 G.PerkTurretClassNames = { Player_PerkTurret_C = true }
+G.PerkTurretShort      = "Player_PerkTurret_C" -- for FindAllOf (only on a press, ~50 ms)
 G.MiniTurretClassNames = { NPC_Shooter_Turret_C = true }
 G.ShooterClassNames = { -- same list as HTR's gamedefs.lua
     Q1_Shooter_AI_C = true, Q1_GuardShooter_C = true, Q1_Shooter_Robot_C = true, Q1_Boss_C = true,
@@ -85,6 +86,7 @@ G.P = {
     -- Player_PerkTurret_C / NPC_Shooter_Turret_C
     ActiveNow = "ActiveNow?", TurretDead = "NPCDead", LifeTime = "LifeTime", MaxHP = "MaxHP", CurrentHP = "CurrentHP",
     TurretTarget = "LastDetectedActor", OwnerShooter = "OwnerShooter", Ammo = "Ammo",
+    Shooting = "Shooting",                                   -- true while its shoot timer runs (StopShoot clears it)
     InCombat = "PlayerInCombat",                             -- Q1_Character
     -- Q1_Shooter_AI
     Ready = "Ready?", Dead = "NPCDead", AIType = "AIType", IsCompanion = "IsCompanian", CanSee = "CanSeeTheTarget",

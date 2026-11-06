@@ -44,7 +44,10 @@ local T = {
     B = nil,               -- barricade.lua, when barricades are enabled
     extra = {},            -- more fields for the state file (barricades)
     loaded = {},           -- the state file as read at start
+    orphans = {},          -- [address] = { path, X, Y, Z, lastTick }: perk turrets TE doesn't know (leftovers)
+    lostEntry = nil,       -- { ammo, structure } of the player's turret when it was declared lost
 }
+local RECOVER_RANGE = 3000 -- cm: a turret that stops responding this close to you is recovered, not lost
 local STATE_FILE = "te_state.txt"
 local KEEP = { CARRIED = true, LOST = true, DESTROYED = true }
 
@@ -404,11 +407,57 @@ local function finishPack(p)
         return
     end
     T.structure = 100 * e.structure / e.max
-    if cfg().Turret.Rounds > 0 then T.ammo = math.max(0, e.ammo or 0) end
+    if cfg().Turret.Rounds > 0 then T.ammo = math.max(0, e.ammo or 0) end -- its ammo goes with it
     e.packed = true
     T.queue(a, "destroy")
     T.setState("CARRIED")
-    U.notify(p, "Turret packed - you are carrying it")
+    U.notify(p, cfg().Turret.Rounds > 0 and string.format("Turret packed - you are carrying it (%d rounds)", T.ammo)
+        or "Turret packed - you are carrying it")
+end
+
+-- Stop a turret's fire and its effects: StopShoot pauses its shoot timer and switches off the muzzle
+-- flash and the tracer (read in Player_PerkTurret). Vanilla only stops by itself when its target is a
+-- dead Q1_Shooter_AI, so a turret TE has lost track of can keep its firing effect.
+function T.silence(t)
+    U.set(t, P.ActiveNow, false)
+    pcall(function() t:StopShoot() end)
+end
+
+-- Give the player back a turret found standing (it stopped responding, or a leftover near you).
+local function recovered(p, t, msg)
+    if t then T.silence(t); pcall(function() t:K2_DestroyActor() end) end
+    local le = T.lostEntry or {}
+    T.lostEntry = nil
+    T.structure = math.max(1, math.min(100, le.structure or T.structure))
+    if cfg().Turret.Rounds > 0 and le.ammo then T.ammo = math.max(0, le.ammo) end
+    T.setState("CARRIED")
+    U.notify(p, cfg().Turret.Rounds > 0 and string.format("%s (%d rounds)", msg, T.ammo) or msg)
+end
+
+-- With no turret (lost / destroyed), a press next to a perk turret TE doesn't know recovers it.
+local function recoverNearby(p)
+    local pos = U.location(p)
+    if not pos then return false end
+    local range, found = cfg().Player.PackRange * 2, nil
+    for a, o in pairs(T.orphans) do
+        if o.X and U.dist(pos, o) <= range then
+            T.orphans[a] = nil
+            found = U.find(o.path)
+            if found then break end
+        end
+    end
+    if not found then -- a standing turret that doesn't even tick: look once (~50 ms, only on a press)
+        local list
+        pcall(function() list = FindAllOf(G.PerkTurretShort) end)
+        for _, t in ipairs(list or {}) do
+            local a = U.addr(t)
+            if a and U.valid(t) and not T.turrets[a] and U.dist(pos, U.location(t)) <= range then found = t break end
+        end
+    end
+    if not found then return false end
+    U.warn("recovered a perk turret TE had lost track of (state " .. T.state .. ")")
+    recovered(p, found, "Turret recovered - you are carrying it")
+    return true
 end
 
 local function handlePress(p)
@@ -418,6 +467,7 @@ local function handlePress(p)
     if T.state == "CARRIED" then return startDeploy(p) end
     if T.state == "DEPLOYED" then return startPack(p) end
     if T.state == "LOST" or T.state == "DESTROYED" then
+        if recoverNearby(p) then return end
         local r = cfg().Player.Resupply
         local msg = "it is gone"
         if r == "level" then
@@ -448,11 +498,30 @@ local function stepWork(p, now)
 end
 
 -- Loss, arrival and resupply ---------------------------------------------------------------
+-- The deployed turret stopped ticking for 3 s: it went with the area (a level or floor change), or it
+-- is still standing but no longer runs (seen in a dungeon: it kept its firing effect without shooting,
+-- and TE said you had no turret). A standing one is silenced and removed; if it is close to you, you
+-- get it back (with its ammo and damage), else it is lost.
 local function checkLost(p, now)
     if T.state ~= "DEPLOYED" and T.state ~= "PACKING" then return end
-    local e = T.playerTurret()
+    local e, a = T.playerTurret()
     if e and (e.dead or now - e.lastTick < 3.0) then return end
     if T.work then T.work = nil; kneel(p, false) end
+    local ghost = nil
+    if e then
+        T.turrets[a] = nil
+        T.lostEntry = { ammo = e.ammo, structure = 100 * math.max(0, e.structure) / e.max }
+        ghost = U.find(e.path) -- ~0 ms if it still exists, ~37 ms once if it is gone
+    end
+    if ghost then
+        local pos = U.location(p)
+        if pos and U.dist(pos, e) <= RECOVER_RANGE then
+            U.warn("player turret stopped responding nearby: recovered")
+            return recovered(p, ghost, "Your turret stopped responding - recovered, you are carrying it")
+        end
+        T.silence(ghost)
+        pcall(function() ghost:K2_DestroyActor() end)
+    end
     T.setState("LOST")
     U.notify(p, "Your turret was left behind - lost")
 end
@@ -650,11 +719,40 @@ function T.onTurretBeginPlay(self)
 end
 
 -- Post-hook of Player_PerkTurret_C:ReceiveTick(DeltaSeconds): heartbeat + command queue.
+-- A perk turret TE doesn't know is ticking. While TE is on, vanilla can't spawn one, so it is a
+-- leftover (one TE lost track of). Keep it silent. If you have your own turret, remove it; if yours
+-- was lost or destroyed, leave it for a press next to it (recoverNearby).
+local function onOrphanTick(t, a)
+    if not T.on or not a then return end
+    local now = os.clock()
+    local o = T.orphans[a]
+    if not o then
+        o = { path = U.path(t), nextLook = 0 }
+        T.orphans[a] = o
+        U.warn("perk turret " .. tostring(a) .. " not known to TE (state " .. T.state .. "): silenced")
+    end
+    o.lastTick = now
+    if U.get(t, P.ActiveNow, false) or (not o.quiet and U.get(t, P.Shooting, false)) then
+        T.silence(t)
+        o.quiet = true
+    end
+    if T.state ~= "LOST" and T.state ~= "DESTROYED" then
+        T.orphans[a] = nil
+        pcall(function() t:K2_DestroyActor() end)
+        return
+    end
+    if now >= o.nextLook then
+        o.nextLook = now + 1.0
+        local l = U.location(t)
+        if l then o.X, o.Y, o.Z = l.X, l.Y, l.Z end
+    end
+end
+
 function T.onTurretTick(self)
     local t = self:get()
     local a = U.addr(t)
     local e = a and T.turrets[a]
-    if not e then return end
+    if not e then return onOrphanTick(t, a) end
     local now = os.clock()
     e.lastTick = now
     if #e.queue > 0 then
@@ -688,9 +786,16 @@ function T.onTurretTick(self)
         end
         e.lastBelt = belt
     end
-    if (e.outOfAmmo or e.stopped) and not e.dead and U.get(t, P.ActiveNow, false) then
-        U.set(t, P.ActiveNow, false)
-        pcall(function() t:StopShoot() end)
+    -- stopped / empty: keep it off, firing effect included (its timer can be left running). Its stop
+    -- routine runs once until it is switched on again and each shot sets Shooting, so after one stop,
+    -- stop again only if it is switched on or fires.
+    if (e.outOfAmmo or e.stopped) and not e.dead then
+        if U.get(t, P.ActiveNow, false) or e.firedAt == now or (not e.quiet and U.get(t, P.Shooting, false)) then
+            T.silence(t)
+            e.quiet = true
+        end
+    else
+        e.quiet = nil
     end
     if now >= (e.nextLook or 0) then
         e.nextLook = now + 0.25

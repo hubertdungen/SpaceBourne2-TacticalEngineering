@@ -874,3 +874,43 @@ from 140 to 0 in about 4 s (notices at 49 % and 25 %). One launch, no errors.
 
 Still not tested in game: companion engineers, the rare enemy engineers, the HTR 0.4.8 `turret_light`
 caliber, and Silent Ops 0.2 hearing the turret.
+### 0.2.2 (2026-11-06, code only, the display was off): bugs 18 and 19
+
+**18, a ghost turret mid-dungeon** (firing effect, no rounds, no damage; TE said there was no turret).
+No log of the moment (te.log had only load lines). Most likely chain, from the Blueprint (read):
+`JustShoot` switches on the muzzle flash and tracer each round, and only `StopShoot` switches them off;
+vanilla calls it only when the target is a dead `Q1_Shooter_AI`. TE declared the turret LOST after 3 s
+without a tick (a floor change or streaming can do that) but left the actor standing, and it stayed
+registered. A press then said "No turret". Fix:
+- `T.silence(t)`: `ActiveNow = false` + `StopShoot()`. Used for stopped / empty turrets too, now also
+  when only `Shooting` is still true.
+- `checkLost`: the turret leaves the registry; `T.lostEntry` keeps its ammo and damage. If the actor still
+  exists (`U.find(path)`, one lookup): within 30 m it is recovered (removed, the player carries it, ammo
+  and damage kept); farther it is silenced and removed, and lost.
+- `onOrphanTick`: a ticking perk turret TE doesn't know, while TE is on, is silenced. If the player has a
+  turret it is removed; if theirs was lost or destroyed, it waits.
+- A press with no turret (LOST / DESTROYED) recovers a perk turret TE doesn't know within 2× PackRange:
+  first the ticking orphans, then one `FindAllOf("Player_PerkTurret_C")` (~50 ms, only on that press).
+
+**19, ammo kept on pack**: it already was (`finishPack` copies the turret's count; deploy gives it back;
+the state file keeps it, e.g. `ammo=400` in the user's file). The pack message now shows it.
+
+**Tested in game 2026-11-06** (test slot, two launches, all passed):
+1. Ammo: deployed with 400, it fired 6 rounds at test enemies, packed: "Turret packed - you are carrying it
+   (394 rounds)", state file `ammo=394`; deployed again: "Turret deployed - 394 rounds", damage kept (117/120).
+2. Ghost near: ticks stopped from the dev runner the moment it was shooting (`Shooting` and the muzzle flash
+   on). 3 s later: "Your turret stopped responding - recovered, you are carrying it (386 rounds)", damage
+   kept, the actor removed. Ghost far: moved 40 m, ticks stopped: 3 s later "Your turret was left behind -
+   lost", the actor removed.
+3. Orphan: a press while LOST with nothing near: "No turret - a new one at your ship in 5 min". An
+   unregistered perk turret spawned next to the player while LOST: "not known to TE (state LOST): silenced",
+   no round fired in 10 s; a press: "Turret recovered - you are carrying it (386 rounds)". While CARRIED a
+   new one is removed on its first tick. While LOST, one with its tick off is found by the press
+   (`FindAllOf`) and recovered.
+4. Out of ammo (3 rounds left): "Your turret is out of ammo", `ActiveNow` false, flash and tracer off, no
+   more rounds (belt count frozen). `Shooting` stays true: `StopShoot` is a DoOnce that reopens only when
+   the tick sees `ActiveNow`, and `JustShoot` sets `Shooting` each round. 0.2.2 first re-ran `T.silence`
+   every tick for that flag (turret tick 0.065 ms instead of ~0.03); now it stops again only when the
+   turret is switched on or fires (`e.quiet`, same for orphans). Retested after the change.
+- At a ship or station, out of combat, a carried turret is refilled to full (older feature): forcing LOST
+  in the test showed 400 again for that reason, not a bug.
