@@ -54,6 +54,8 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 - **On by default.** Installed, it is on. Tap the turret or barricade perk button 3 times quickly to
   switch it off (the vanilla perks come back) or on again.
 
+![A deployed turret firing down a dungeon corridor](https://raw.githubusercontent.com/hubertdungen/SpaceBourne2-TacticalEngineering/main/docs/turret.jpg)
+
 ## Requirements
 
 - SpaceBourne 2 (Steam).
