@@ -40,12 +40,12 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
   it. A destroyed turret stays as a dead wreck.
 - **Enemies fight back.** Enemies hit by a turret, or near one that is firing, turn and shoot it:
   up to 3 at a time, for a few seconds, then they choose again between you and the turret.
-- **Barricades (new in 0.2).** The barricade perk's energy-shield wall is no longer instant and
+- **Barricades.** The barricade perk's energy-shield wall is no longer instant and
   short-lived. Press the barricade perk button: you kneel for 4 seconds, and the wall stays until
   you pack it up (3 seconds, next to it) or leave the area. You carry 1 (2 at perk level 2, 3 at
   level 3), restocked at your ship. It stops enemy rounds, which wear it down until it collapses.
   Building is noisy, like the turret.
-- **Perk levels matter (new in 0.2).** Each level of the turret or barricade perk above 1 sets up
+- **Perk levels matter.** Each level of the turret or barricade perk above 1 sets up
   15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500).
   Small steps, no MMO scaling.
 - **Ally engineers (on by default).** Squad soldiers, including the game's unused "Turretci" role,
@@ -160,9 +160,6 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
 
 ## Known limits
 
-- Since 0.2.3 everything runs on the game thread, from the game's own ticks: the mod uses no
-  UE4SS background loops (LoopAsync / ExecuteWithDelay), which could crash UE4SS 3.0.1 when
-  several mods used them at once.
 - **NPCs don't take cover behind barricades.** The game's AI has no cover search to use them. The
   wall still stops rounds for anyone standing behind it.
 - **Only enemy rounds wear barricades down.** Grenades and other blasts don't damage them.

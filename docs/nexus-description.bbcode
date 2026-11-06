@@ -18,8 +18,8 @@ Version 0.2.3 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods 
 [*][b]It makes noise.[/b] Setting it up or packing it up (a barricade too) is metal work that enemies within about 15 m hear. A firing turret is heard about 60 m away. Unaware enemies go on high alert and come to search around the noise for up to 12 seconds; once alert, HTR's longer alert sight range applies. With [url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]Silent Ops[/url] 0.2 or later, Silent Ops handles the noise instead, with its own suspicion → search → alert: never both.
 [*][b]It can be destroyed.[/b] Rifle hits chip it, snipers and heavy weapons hurt, explosions wreck it. A destroyed turret stays as a dead wreck.
 [*][b]Enemies fight back.[/b] Enemies hit by a turret, or near one that is firing, turn and shoot it: up to 3 at a time, for a few seconds, then they choose again between you and the turret.
-[*][b]Barricades (new in 0.2).[/b] The barricade perk's energy-shield wall is no longer instant and short-lived. Press the barricade perk button: you kneel for 4 seconds, and the wall stays until you pack it up (3 seconds, next to it) or leave the area. You carry 1 (2 at perk level 2, 3 at level 3), restocked at your ship. It stops enemy rounds, which wear it down until it collapses. Building is noisy, like the turret.
-[*][b]Perk levels matter (new in 0.2).[/b] Each level of the turret or barricade perk above 1 sets up 15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500). Small steps, no MMO scaling.
+[*][b]Barricades.[/b] The barricade perk's energy-shield wall is no longer instant and short-lived. Press the barricade perk button: you kneel for 4 seconds, and the wall stays until you pack it up (3 seconds, next to it) or leave the area. You carry 1 (2 at perk level 2, 3 at level 3), restocked at your ship. It stops enemy rounds, which wear it down until it collapses. Building is noisy, like the turret.
+[*][b]Perk levels matter.[/b] Each level of the turret or barricade perk above 1 sets up 15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500). Small steps, no MMO scaling.
 [*][b]Ally engineers (on by default).[/b] Squad soldiers, including the game's unused "Turretci" role, and companions can stop in a fight and deploy a turret of their own (at most 2 per area). Tap a perk button 4 times quickly to switch them off or on.
 [*][b]On by default.[/b] Installed, it is on. Tap the turret or barricade perk button 3 times quickly to switch it off (the vanilla perks come back) or on again.
 [/list]
@@ -115,7 +115,6 @@ The noise events are also shared with other mods (for Silent Ops) through the UE
 [size=5][b]Known limits[/b][/size]
 
 [list]
-[*]Since 0.2.3 everything runs on the game thread, from the game's own ticks: the mod uses no UE4SS background loops (LoopAsync / ExecuteWithDelay), which could crash UE4SS 3.0.1 when several mods used them at once.
 [*][b]NPCs don't take cover behind barricades.[/b] The game's AI has no cover search to use them. The wall still stops rounds for anyone standing behind it.
 [*][b]Only enemy rounds wear barricades down.[/b] Grenades and other blasts don't damage them.
 [*][b]With Silent Ops, work noise is mild for now.[/b] Silent Ops hears a turret being set up (12 m), packed and firing, but one setup or pack only adds a little suspicion, and it doesn't read barricade work yet. Tuning that is on the Silent Ops side.
