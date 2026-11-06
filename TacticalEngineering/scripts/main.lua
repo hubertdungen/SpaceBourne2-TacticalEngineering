@@ -15,7 +15,7 @@
   Design notes and the test log: DESIGN.md in the repository.
 ]]
 
-local VERSION = "0.2.2"
+local VERSION = "0.2.3"
 
 local U = require("te.util")
 
@@ -69,6 +69,8 @@ end
 TE = { version = VERSION, cfg = cfg }
 
 local H = require("te.hooks")
+local GT = require("te.gametick") -- timed work on the game thread (no LoopAsync: UE4SS crash, 0.2.3)
+GT.log = function(msg) U.warn(msg) end
 H.SLOW = cfg.Debug.SlowHookMs / 1000
 local G = require("te.gamedefs")
 local T = require("te.turret")
@@ -87,7 +89,8 @@ U.warn(string.format("=== Tactical Engineering %s loaded: %s, turret %s ===", VE
 
 -- Hooks (all post-hooks on Blueprint functions; each returns at once while TE is off) --------
 -- player
-H.add(G.Fn.PlayerTick, T.onPlayerTick, "player tick")
+-- The player tick also pumps the timed work (gametick.lua), on the game thread.
+H.add(G.Fn.PlayerTick, T.onPlayerTick, "player tick", nil, function() GT.pump("foot") end)
 if cfg.BlockVanillaTurretPerk or B then H.add(G.Fn.Regenerators, T.onRegenerators, "vanilla perk block") end
 if B then
     H.add(G.Fn.BarricadePerk, B.onPerkButton, "barricade perk button")
@@ -142,26 +145,27 @@ local function testCommands()
 end
 
 -- Hook poll ----------------------------------------------------------------------------
+-- On the game thread, pumped by the player tick (gametick.lua). Until 0.2.2 this was LoopAsync +
+-- ExecuteInGameThread: from UE4SS's async thread that writes a map all mods share without a lock,
+-- and two mods at once crashed the game (UE4SS.dll+0x87c104). After each load or possession
+-- (ClientRestart) the player tick is looked for right away, so the pump starts by itself.
 local lastStatus, profileAt = "", os.clock() + 30
-LoopAsync(1000, function()
-    ExecuteInGameThread(function()
-        local t0 = os.clock()
-        local ok, err = pcall(function()
-            if T.arrived then T.arrived = false; H.wake() end
-            H.poll(t0)
-            if cfg.Debug.TestCommands then testCommands() end
-        end)
-        if not ok then U.warn("poll: " .. tostring(err)) end
-        if t0 > profileAt then
-            profileAt = t0 + 30
-            local prof = H.profile()
-            if U.Verbose and prof ~= "" then U.log("profile 30 s: " .. prof) end
-        end
-        local on, off = H.status()
-        local s = string.format("hooks active %d, waiting %d", on, off)
-        if s ~= lastStatus then lastStatus = s; U.log(s) end
+GT.boot(function() H.prime(G.Fn.PlayerTick) end)
+GT.every(1.0, function(t0)
+    local ok, err = pcall(function()
+        if T.arrived then T.arrived = false; H.wake() end
+        H.poll(t0)
+        if cfg.Debug.TestCommands then testCommands() end
     end)
-    return false
+    if not ok then U.warn("poll: " .. tostring(err)) end
+    if t0 > profileAt then
+        profileAt = t0 + 30
+        local prof = H.profile()
+        if U.Verbose and prof ~= "" then U.log("profile 30 s: " .. prof .. " | timed work: " .. GT.report()) end
+    end
+    local on, off = H.status()
+    local s = string.format("hooks active %d, waiting %d", on, off)
+    if s ~= lastStatus then lastStatus = s; U.log(s) end
 end)
 
 -- Deploy key ------------------------------------------------------------------------------

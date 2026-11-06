@@ -180,12 +180,11 @@ local function muteAlarm()
     end
     pcall(function() snd.Volume = 0.0 end)
     unmuteAt = os.clock() + 2.0
-    ExecuteWithDelay(2100, function()
-        ExecuteInGameThread(function()
-            if os.clock() < unmuteAt then return end -- a newer message keeps it quiet a bit longer
-            local s = StaticFindObject(CANT)
-            if U.valid(s) and cantVolume then pcall(function() s.Volume = cantVolume end) end
-        end)
+    -- on the game thread (gametick.lua; 0.2.2 and earlier used ExecuteWithDelay: UE4SS crash risk)
+    require("te.gametick").after(2.1, function(now)
+        if now < unmuteAt then return end -- a newer message keeps it quiet a bit longer
+        local s = StaticFindObject(CANT)
+        if U.valid(s) and cantVolume then pcall(function() s.Volume = cantVolume end) end
     end)
 end
 

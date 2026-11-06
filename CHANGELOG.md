@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.3 — 2026-11-06
+
+- **Fixed: a UE4SS crash with many mods** ("Fatal error" in UE4SS.dll, at the main menu or in
+  play). Background loops (LoopAsync, ExecuteWithDelay) run on their own threads without UE4SS's
+  lock, and two mods calling ExecuteInGameThread from there at the same moment broke a map UE4SS
+  shares between all mods. The once-a-second hook check and the alarm unmute now run on the game
+  thread, from the player's own tick (new `te\gametick.lua`, the same file in every mod of the
+  set). The crash is gone only once every mod of the set has this change.
+
 ## 0.2.2 — 2026-11-06
 
 - **No more ghost turrets.** A turret that stops responding (seen mid-dungeon: it kept its firing

@@ -8,7 +8,7 @@ deployed it does the job, and the enemy treats it as a threat: they shoot back u
 The barricade perk gets the same treatment, and higher perk levels make you a better engineer.
 It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.2 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
+Version 0.2.3 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
 works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism).
 
 ## What it does
@@ -71,7 +71,7 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 
 ## Install
 
-1. Download `TacticalEngineering-0.2.2.zip` from the
+1. Download `TacticalEngineering-0.2.3.zip` from the
    [releases](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases).
 2. Extract it into the game folder (`...\steamapps\common\SpaceBourne 2\`). It adds
    `SB2\Binaries\Win64\Mods\TacticalEngineering\`; the `enabled.txt` inside turns it on.
@@ -160,6 +160,9 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
 
 ## Known limits
 
+- Since 0.2.3 everything runs on the game thread, from the game's own ticks: the mod uses no
+  UE4SS background loops (LoopAsync / ExecuteWithDelay), which could crash UE4SS 3.0.1 when
+  several mods used them at once.
 - **NPCs don't take cover behind barricades.** The game's AI has no cover search to use them. The
   wall still stops rounds for anyone standing behind it.
 - **Only enemy rounds wear barricades down.** Grenades and other blasts don't damage them.
