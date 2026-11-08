@@ -227,12 +227,14 @@ the turret's remaining structure, and the time it was lost.
    - not on a station (`WhereIsPlayer` ∉ {4, 5});
    - state `CARRIED`.
 2. Kneel and lock: `pawn.DesiredStance = 1`, `pawn:Crouch(false)`, `pawn.DisableMove = true`.
-   Optionally holster (`HolsterWhileWorking`) and play the trip-mine montage.
+   Holster (`HolsterWhileWorking`, on since 0.2.4: weapon away, keys locked, drawn again after; see
+   0.2.4 below). The trip-mine montage is still to do.
 3. Every 0.25 s, show a progress message ("Deploying turret… 3 s"). Cancel if:
    - the key is pressed again;
    - you were pushed more than 0.5 m;
    - you died.
-   Taking hits does **not** cancel. You are simply exposed: no movement, and no shooting if holstered.
+   Taking hits does **not** cancel. You are simply exposed: no movement, and no shooting (holstered).
+   A melee swing cancels (0.2.4).
 4. At the end, spawn the turret at `pawn.BarricadeLocation:K2_GetComponentLocation()` (where vanilla spawns
    it), facing your yaw:
    - **The skeleton's path**: set `LifeTime = 1e7` on the class default object
@@ -550,7 +552,7 @@ the experimental ones (ally engineers, enemy engineers, ammo limits) start off.
 | `UseTurretPerkButton` | `true` | the vanilla turret perk's button does the same thing |
 | `BlockVanillaTurretPerk` | `true` | keep the vanilla instant turret off (required: it would explode ours) |
 | `Player.DeploySeconds` / `PackSeconds` | 6 / 5 | time kneeling to set up / tear down |
-| `Player.HolsterWhileWorking` | `false` | put the weapon away while working |
+| `Player.HolsterWhileWorking` | `true` (0.2.4) | put the weapon away while working, lock the weapon keys, draw it again after |
 | `Player.PackRange` | 250 | cm |
 | `Player.CarrySpeed` | 0.8 | speed while carrying |
 | `Player.CarryNoSprint` | `true` | no sprint while carrying |
@@ -564,7 +566,7 @@ the experimental ones (ally engineers, enemy engineers, ammo limits) start off.
 | `Enemies.AwareRadius` / `TargetChance` / `MaxAttackers` / `FocusSeconds` | 2500 / 0.6 / 3 / {4, 8} | |
 | `Enemies.DamageEnemyMiniTurrets` | `true` | allies can destroy enemy mini-turrets |
 | `Enemies.EngineerChance` | 0 | extra enemy engineers (vanilla MiniTurrets ability) |
-| `Allies.Engineers` | `false` | squad soldiers / companions deploy turrets |
+| `Allies.Engineers` | `true` (0.2.1) | squad soldiers / companions deploy turrets; 4 taps switch (remembered) |
 | `Allies.TurretciAreEngineers` / `SquadEngineerChance` / `CompanionEngineerChance` | `true` / 0.1 / 0.15 | |
 | `Allies.DeploySeconds` / `MaxAllyTurrets` | 8 / 2 | |
 | `Debug.Log` / `SlowHookMs` | `false` / 8 | same meaning as HTR |
@@ -709,6 +711,7 @@ in a ground battle with the squad. Record frame times before and after each phas
    allowed while carrying? Can you leave the turret on the ship, so you move at full speed when you don't
    need it?
 6. **Exposure while working**: keep your weapon (but kneeling and unable to move), or holster it?
+   *Answered 2026-11-07: holster it, no drawing until done or cancelled (0.2.4).*
 7. **Ally engineers**: only the unused `Turretci` squad role, or also a random 10 % of squad soldiers and 15 %
    of companions? Should they ever pack up and follow?
 8. **Enemy engineers**: keep vanilla (only some minibosses), or add rare regular enemy engineers?
@@ -914,3 +917,81 @@ the state file keeps it, e.g. `ammo=400` in the user's file). The pack message n
    turret is switched on or fires (`e.quiet`, same for orphans). Retested after the change.
 - At a ship or station, out of combat, a carried turret is refilled to full (older feature): forcing LOST
   in the test showed 400 again for that reason, not a bug.
+
+### 0.2.3 (2026-11-06): gametick
+
+Made and published from the public repo by the htr-fixes session (no LoopAsync / ExecuteWithDelay; the
+hook poll and the unmute run from the shared `te/gametick.lua`, pumped once per frame). Copied back here
+unchanged before 0.2.4.
+
+### 0.2.4 (2026-11-08): weapon away while working, ally engineers back on
+
+The user's requests (2026-11-07): "por predefinição liga os engenheiros no turrets" and "quando se monta
+turrets não se deve poder ter armas na mão, elas fazem holster".
+
+**Ally engineers.** `Allies.Engineers` was already true, but `T.save()` wrote `allies=on|off` on every
+save, so the user's `allies=off` (seen in their `te_state.txt`; no toggle in their te.log) outlived the
+default change. Now only an explicit 4-tap choice is stored, as `alliesChoice`; the old `allies` key is
+ignored and dropped at the next save. Everyone starts with them on once.
+
+**Weapon away while working** (read from `Q1_Character`'s ubergraph, TFP's `kdec` dump; not committed):
+- Weapon in hand: `OverlayState` 6 = pistol (slot 0), 5 = rifle (slot 1 or 2), 0 = none. Slots 1 and 2
+  share 5; `RefreshAllWeapons` hides the body mesh of the weapon in hand (`PistolSM`, `Slot_1_SKM`,
+  `Slot_2_SKM`, `MiscMesh`), so the hidden one names the slot.
+- `W_1` / `W_2` / `W_3` are custom events that jump into the key 1 / 2 / 3 handlers (the switch button's
+  tap calls them). The key of the weapon in hand puts it away: the pistol at once
+  (`GameBuilder:UnEquipHandWeaponFromHand(0, true)`, `RemoveAllWeapons(true)`, `BPI_Set_OverlayState(0)`),
+  a rifle with `RifleToBackMontage` and the same calls on its `State` notify. Any other key draws.
+- Each handler first returns if `SwitchingWeapon` is true (the game sets it while drawing / holstering and
+  clears it from a 2 s delay). The perk-button dispatcher never reads it. So holding `SwitchingWeapon`
+  true blocks keys 1/2/3 and the switch button's tap, and leaves the perk buttons (cancel, 3/4 taps) free.
+- `AtWeaponRestrictedArea` (what the game uses when you faint, and in cyborg mode) also blocks the keys,
+  but the perk dispatcher checks it too: a tap couldn't cancel. Not used.
+- Melee (`MeleeAttackOn?`) checks neither flag: a swing cancels the work ("interrupted").
+- The misc beam (slot 3) has no `W_` event: it is put away at once with the calls above
+  (`FindFirstOf("God_GameBuilder")`); so is any weapon still in hand after two key tries 1.5 s apart.
+
+`stepWeapon` runs every player step (0.1 s), also while TE is off: busy (turret or barricade work) = put
+away and hold the lock; not busy = release once, then draw the slot you had (`W_n` again) when nothing is
+in hand and the game isn't switching, or give up after 3 s (you drew one yourself). A new pawn drops it.
+
+**Test plan (tonight, test slot):**
+1. Allies: the user's `te_state.txt` has `allies=off`: after load the status says `allies=true`; 4 taps:
+   "Ally engineers OFF", state file `alliesChoice=off`, restart: still off; 4 taps back on.
+2. Rifle in hand, turret perk button: the rifle goes to the back with its animation, keys 1/2/3 and the
+   switch button do nothing while kneeling; done: the rifle comes back. Log: "weapon slot 1 put away
+   (try 1)", "weapon slot 1 drawn again".
+3. Same with the pistol (instant), and with nothing in hand (nothing drawn after).
+4. Cancel with a tap mid-setup: weapon back. Pack up: same. Barricade build: same.
+5. Melee swing while kneeling: "Turret: interrupted", weapon back.
+6. Draw attempts during the work: nothing, and after the work the keys work normally (no stuck lock).
+7. Frame time of the player step with the lock held (profile).
+
+**Tested in game 2026-11-08 03:20-03:29** (test slot, one launch, HTR 0.4.14 + TE + dev console, all
+passed; the dev runner now runs from TE's gametick instead of LoopAsync):
+1. State file with the old `allies=off`: `allies=true`, `alliesChoice=nil`. 4 taps (`toggleReq`): "Ally
+   engineers OFF", file `alliesChoice=off` and no `allies=` line; again: `alliesChoice=on`.
+2. Rifle (`W_2`, overlay 5, `Slot_1_SKM` hidden), turret deploy: "weapon slot 1 put away (try 1)"; overlay
+   0 about 1.5 s later (the animation), `SwitchingWeapon` true; `W_2` and `W_1` during the work: overlay
+   stays 0. Turret up: "weapon slot 1 drawn again", overlay 5, lock released.
+3. Pistol (overlay 6, `PistolSM` hidden), pack up: overlay 0 within 0.3 s; `W_2` blocked; pistol back after.
+4. Empty hands, deploy: lock held, nothing drawn after, `SwitchingWeapon` false again.
+5. Rifle, pack, tap at 3 s: "Turret: cancelled", rifle back.
+6. Rifle, pack, `MeleeAttackOn?` set: "Turret: interrupted", rifle back.
+7. Barricades (perk set to 2 for the test save): build, pack, a tap to cancel ("Barricade: cancelled"),
+   melee ("Barricade: interrupted"): the rifle away during the work each time and back after.
+8. After all: `W_2` holsters and draws normally.
+9. Cost: player tick ~0.02 ms per frame idle, ~0.03-0.05 ms while working (the lock step runs every
+   0.1 s). Hitches seen: 24 ms on the first deploy and 57 ms on a barricade build, both known (section
+   "Known limits" in the README).
+- Screenshot `docs/holster.jpg`: packing up a barricade, kneeling, both weapons on the back.
+
+**UE4SS 3.0.1 Lua leak audit (2026-11-08, htr-fixes' notes `ue4ss-301-lua-leaks-2026-11-08.md`).** TE
+calls no UFunction with out parameters (no `K2_Set*` / `K2_Add*` with a hit result, no traces, view
+points, screen projection or bounds), per frame or otherwise. `K2_SetFocus` / `K2_SetFocalPoint`
+(targeting.lua) take inputs only and run per engagement, not per frame. The 0.2.4 calls (`W_1..3`,
+`IsVisible`, `UnEquipHandWeaponFromHand`, `RemoveAllWeapons`, `BPI_Set_OverlayState`) have no out
+parameters either. Open, as in HTR (same design): `hooks.lua` registers a group's hooks again when the
+class reappears at a new address, without `UnregisterHook` of the old pair, so the old callback may
+stay and both fire. For TE that matters only for classes that unload (squad soldiers, shooters);
+not changed here, to be fixed the same way across the set.

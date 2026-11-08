@@ -46,6 +46,8 @@ local T = {
     loaded = {},           -- the state file as read at start
     orphans = {},          -- [address] = { path, X, Y, Z, lastTick }: perk turrets TE doesn't know (leftovers)
     lostEntry = nil,       -- { ammo, structure } of the player's turret when it was declared lost
+    alliesChoice = nil,    -- "on" / "off" once chosen with 4 quick taps (remembered); nil = config
+    weapon = nil,          -- weapon put away for the work: { pawn, slot, tries, nextTry, ... }, see stepWeapon
 }
 local RECOVER_RANGE = 3000 -- cm: a turret that stops responding this close to you is recovered, not lost
 local STATE_FILE = "te_state.txt"
@@ -89,7 +91,11 @@ function T.init(c)
     local s = U.loadState(STATE_FILE)
     T.loaded = s
     if s.on ~= nil then T.on = (s.on == "on") else T.on = c.StartOn == true end
-    if s.allies ~= nil then T.allies = (s.allies == "on") else T.allies = c.Allies.Engineers ~= false end
+    -- Ally engineers: the config (on by default) unless you chose with 4 quick taps. Only that choice
+    -- is remembered ("alliesChoice"). 0.2.1-0.2.3 stored the switch on every save ("allies"), so an
+    -- "off" from older defaults kept them off after the default changed: that key is ignored.
+    T.alliesChoice = (s.alliesChoice == "on" or s.alliesChoice == "off") and s.alliesChoice or nil
+    if T.alliesChoice then T.allies = (T.alliesChoice == "on") else T.allies = c.Allies.Engineers ~= false end
     T.structure = math.min(100, tonumber(s.structure) or 100) -- % (0.1.x stored points out of 100: the same)
     T.lostAt = tonumber(s.lostAt) or 0
     T.ammo = tonumber(s.ammo) or c.Turret.Rounds
@@ -104,7 +110,7 @@ function T.init(c)
 end
 
 function T.save()
-    local s = { on = T.on and "on" or "off", allies = T.allies and "on" or "off", state = T.state,
+    local s = { on = T.on and "on" or "off", alliesChoice = T.alliesChoice, state = T.state,
         structure = math.floor(T.structure + 0.5),
         lostAt = T.lostAt or 0, ammo = math.floor(T.ammo or 0) }
     for k, v in pairs(T.extra) do s[k] = v end
@@ -255,7 +261,93 @@ local function kneel(p, on)
         U.set(p, P.DesiredStance, G.Stance.Standing)
         pcall(function() p:UnCrouch(false) end)
     end
-    -- TODO(P7): HolsterWhileWorking (ToggleCurrentWeapon) and the kneel montage (G.KneelMontage).
+    -- TODO(P7): the kneel montage (G.KneelMontage). The weapon is put away by stepWeapon.
+end
+
+-- Weapon away while working ------------------------------------------------------------------
+-- Setting up or packing up (a turret or a barricade) takes both hands. The weapon in hand is put
+-- away with the game's own key for its slot (W_1 pistol, W_2 / W_3 rifles: the key of the weapon
+-- in hand puts it away, with its animation), and SwitchingWeapon is held true, so the game's
+-- weapon keys do nothing until the work ends. The perk buttons don't look at SwitchingWeapon:
+-- a tap still cancels. When the work ends (done, cancelled or interrupted) the lock is released
+-- and the weapon you had is drawn again. State-driven: whatever ends the work, the next step
+-- releases the lock.
+local function bodyMeshHidden(p, slot)
+    local hidden = false
+    pcall(function() hidden = not p[P.BodyMesh[slot]]:IsVisible() end)
+    return hidden
+end
+
+-- Slot of the weapon in hand: 0 pistol, 1 / 2 rifles, 3 the misc beam; nil = none in hand.
+-- The body mesh of the weapon in hand is hidden (RefreshAllWeapons).
+local function slotInHand(p)
+    local ov = U.get(p, P.OverlayState, G.Overlay.None)
+    if ov == G.Overlay.Pistol then
+        if not bodyMeshHidden(p, 0) and bodyMeshHidden(p, 3) then return 3 end
+        return 0
+    end
+    if ov ~= G.Overlay.Rifle then return nil end
+    for slot = 1, 3 do
+        if bodyMeshHidden(p, slot) then return slot end
+    end
+    return 1
+end
+
+-- At once, without the animation: what the game's weapon-switch button does when held.
+local function putAwayNow(p, slot)
+    local gb = FindFirstOf(G.GameBuilder)
+    if U.valid(gb) then pcall(function() gb:UnEquipHandWeaponFromHand(slot, true) end) end
+    pcall(function() p:RemoveAllWeapons(true) end)
+    pcall(function() p:BPI_Set_OverlayState(G.Overlay.None) end)
+end
+
+local function weaponKey(p, slot)
+    local key = G.WeaponKey[slot]
+    if not key then return false end
+    U.set(p, P.SwitchingWeapon, false) -- the key does nothing while it is set
+    return (pcall(function() p[key](p) end))
+end
+
+local function stepWeapon(p, now)
+    local L = T.weapon
+    if L and L.pawn ~= T.playerAddr then T.weapon, L = nil, nil end -- new pawn: its keys are free
+    local busy = T.work ~= nil or (T.B ~= nil and T.B.work ~= nil)
+    if busy and cfg().Player.HolsterWhileWorking then
+        if not L or L.done then -- (a new job before the redraw: keep the weapon to draw afterwards)
+            L = { pawn = T.playerAddr, slot = L and L.slot or nil, tries = 0, nextTry = 0 }
+            T.weapon = L
+        end
+        local s = slotInHand(p)
+        if s then
+            -- in hand (or drawn again): put it away. The rifle's animation takes about a second, so
+            -- try again after 1.5 s; the third time at once, without the animation.
+            if now >= L.nextTry then
+                if L.slot == nil then L.slot = s end
+                L.tries = L.tries + 1
+                L.nextTry = now + 1.5
+                if L.tries > 2 or not weaponKey(p, s) then putAwayNow(p, s) end
+                U.log(string.format("weapon slot %d put away (try %d)", s, L.tries))
+            end
+        elseif not U.get(p, P.SwitchingWeapon, false) then
+            U.set(p, P.SwitchingWeapon, true) -- weapon keys do nothing (the game may clear it)
+        end
+    elseif L then
+        if not L.done then
+            L.done, L.redrawBy = true, now + 3.0
+            U.set(p, P.SwitchingWeapon, false)
+            if L.slot == nil then T.weapon = nil end
+            return
+        end
+        -- draw the weapon you had, once putting it away has finished (or give up after 3 s)
+        local s = slotInHand(p)
+        if s ~= nil and now < L.redrawBy then return end
+        if s == nil and not U.get(p, P.SwitchingWeapon, false) then
+            if weaponKey(p, L.slot) then U.log("weapon slot " .. tostring(L.slot) .. " drawn again") end
+        elseif now < L.redrawBy then
+            return -- the game is switching: wait
+        end
+        T.weapon = nil
+    end
 end
 
 local function canWork(p)
@@ -301,6 +393,7 @@ end
 
 function T.toggleAllies(p)
     T.allies = not T.allies
+    T.alliesChoice = T.allies and "on" or "off"
     T.save()
     U.warn("ally engineers " .. (T.allies and "ON" or "OFF"))
     U.notify(p, "Ally engineers " .. (T.allies and "ON" or "OFF") .. (T.on and "" or " (Tactical Engineering is off)"))
@@ -491,6 +584,9 @@ local function stepWork(p, now)
     end
     local pos = U.location(p)
     if pos and U.dist(pos, w) > 50 then return T.cancelWork(p, "interrupted") end
+    if cfg().Player.HolsterWhileWorking and U.get(p, P.MeleeAttack, false) then
+        return T.cancelWork(p, "interrupted") -- the melee swing doesn't check the weapon lock
+    end
     U.set(p, P.DisableMove, true) -- other game code may clear it
     if now - w.t0 >= w.duration then
         if w.kind == "deploy" then finishDeploy(p) else finishPack(p) end
@@ -616,11 +712,13 @@ local function step(p, now)
     if not T.on then
         T.pressed = false
         if T.B then T.B.off(p) end
+        stepWeapon(p, now) -- releases the weapon keys if work was stopped
         return
     end
     if T.pressed then T.pressed = false; handlePress(p) end
     stepWork(p, now)
     if T.B then T.B.step(p, now) end
+    stepWeapon(p, now)
     if now >= T.nextSlow then
         T.nextSlow = now + 1.0
         checkLost(p, now)
@@ -905,6 +1003,9 @@ function T.status()
     local parts = { string.format("on=%s allies=%s state=%s structure=%.0f ammo=%s work=%s player=%s", tostring(T.on),
         tostring(T.allies), T.state,
         T.structure, tostring(T.ammo), T.work and (T.work.kind .. string.format(" %.1fs", now - T.work.t0)) or "-", tostring(T.playerAddr)) }
+    local L = T.weapon
+    parts[#parts + 1] = string.format("weapon=%s", L and string.format("{slot=%s tries=%d done=%s}", tostring(L.slot),
+        L.tries, tostring(L.done == true)) or "-")
     for a, e in pairs(T.turrets) do
         parts[#parts + 1] = string.format("[%s %s structure=%.0f dead=%s tick=%.1fs fired=%.1fs ammo=%s]", e.kind,
             tostring(a), e.structure, tostring(e.dead), now - e.lastTick, now - e.firedAt, tostring(e.ammo))

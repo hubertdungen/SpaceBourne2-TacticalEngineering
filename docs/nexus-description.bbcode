@@ -2,29 +2,72 @@
 
 The turret perk stops being an instant MMO spawn and becomes real engineering. You carry one heavy turret, kneel to set it up and to pack it up, and lose it if you leave it behind. Once it is deployed it does the job, and the enemy treats it as a threat: they shoot back until it breaks. The barricade perk gets the same treatment, and higher perk levels make you a better engineer. It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.3 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods page[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
+Version 0.2.4 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods page[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
 
 [line]
 [size=5][b]What it does[/b][/size]
 
+[size=4][b]Setting up and packing up[/b][/size]
+
 [list]
 [*][b]Deploying takes time.[/b] Press your [b]turret perk button[/b]: you kneel and can't move for 6 seconds, then the turret stands 2 m in front of you, unfolds and opens fire. While you work, you are exposed.
-[*][b]It stays.[/b] No 25–40 second lifetime and no self-destruct. It keeps firing until you pack it up, it is destroyed, or you leave it behind.
+[*][b]Both hands on the job.[/b] When you start, your weapon goes away (the game's own holster move). You can't draw it until the work is done or you cancel it; then it comes back out by itself. A melee swing interrupts the work. The same goes for barricades.
+[/list]
+
+[img]https://raw.githubusercontent.com/hubertdungen/SpaceBourne2-TacticalEngineering/main/docs/holster.jpg[/img]
+
+[list]
 [*][b]Packing up takes time too.[/b] Press the turret perk button next to it: it stops firing at once, and you kneel for 5 seconds.
-[*][b]One turret, and it is heavy.[/b] Packed, you carry it: you walk at 80 % speed and can't sprint. Damage stays with the turret.
-[*][b]Leave it behind and it is gone.[/b] A turret still deployed when you leave the area is lost. So is a destroyed one. A replacement waits for you at your ship or a station, out of combat, 5 minutes after the loss.
+[*][b]It makes noise.[/b] Setting it up or packing it up (a barricade too) is metal work that enemies within about 15 m hear. A firing turret is heard about 60 m away. Unaware enemies go on high alert and come to search around the noise for up to 12 seconds; once alert, HTR's longer alert sight range applies. With [url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]Silent Ops[/url] 0.2 or later, Silent Ops handles the noise instead, with its own suspicion → search → alert: never both.
+[/list]
+
+[size=4][b]The turret[/b][/size]
+
+[list]
+[*][b]It stays.[/b] No 25–40 second lifetime and no self-destruct. It keeps firing until you pack it up, it is destroyed, or you leave it behind.
 [*][b]Smaller, not weaker.[/b] It is 60 % the size of the vanilla perk turret, with the same belt-fed gun: 10 rounds/s at enemies within 100 m in line of sight, 3–5 s reloads between belts.
 [*][b]Limited ammo.[/b] It carries 300 rounds. The ammo stays with it when you pack it up, and it is refilled from your ship: in space or on a station, out of combat, while you carry the turret. Empty, it stops firing.
-[*][b]It makes noise.[/b] Setting it up or packing it up (a barricade too) is metal work that enemies within about 15 m hear. A firing turret is heard about 60 m away. Unaware enemies go on high alert and come to search around the noise for up to 12 seconds; once alert, HTR's longer alert sight range applies. With [url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]Silent Ops[/url] 0.2 or later, Silent Ops handles the noise instead, with its own suspicion → search → alert: never both.
 [*][b]It can be destroyed.[/b] Rifle hits chip it, snipers and heavy weapons hurt, explosions wreck it. A destroyed turret stays as a dead wreck.
-[*][b]Enemies fight back.[/b] Enemies hit by a turret, or near one that is firing, turn and shoot it: up to 3 at a time, for a few seconds, then they choose again between you and the turret.
-[*][b]Barricades.[/b] The barricade perk's energy-shield wall is no longer instant and short-lived. Press the barricade perk button: you kneel for 4 seconds, and the wall stays until you pack it up (3 seconds, next to it) or leave the area. You carry 1 (2 at perk level 2, 3 at level 3), restocked at your ship. It stops enemy rounds, which wear it down until it collapses. Building is noisy, like the turret.
-[*][b]Perk levels matter.[/b] Each level of the turret or barricade perk above 1 sets up 15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500). Small steps, no MMO scaling.
-[*][b]Ally engineers (on by default).[/b] Squad soldiers, including the game's unused "Turretci" role, and companions can stop in a fight and deploy a turret of their own (at most 2 per area). Tap a perk button 4 times quickly to switch them off or on.
-[*][b]On by default.[/b] Installed, it is on. Tap the turret or barricade perk button 3 times quickly to switch it off (the vanilla perks come back) or on again.
 [/list]
 
 [img]https://raw.githubusercontent.com/hubertdungen/SpaceBourne2-TacticalEngineering/main/docs/turret.jpg[/img]
+
+[size=4][b]Carrying it[/b][/size]
+
+[list]
+[*][b]One turret, and it is heavy.[/b] Packed, you carry it: you walk at 80 % speed and can't sprint. Damage stays with the turret.
+[*][b]Leave it behind and it is gone.[/b] A turret still deployed when you leave the area is lost. So is a destroyed one. A replacement waits for you at your ship or a station, out of combat, 5 minutes after the loss.
+[/list]
+
+[size=4][b]The enemy[/b][/size]
+
+[list]
+[*][b]Enemies fight back.[/b] Enemies hit by a turret, or near one that is firing, turn and shoot it: up to 3 at a time, for a few seconds, then they choose again between you and the turret.
+[/list]
+
+[size=4][b]Barricades[/b][/size]
+
+[list]
+[*][b]Field engineering, not a spell.[/b] The barricade perk's energy-shield wall is no longer instant and short-lived. Press the barricade perk button: you kneel for 4 seconds, and the wall stays until you pack it up (3 seconds, next to it) or leave the area. You carry 1 (2 at perk level 2, 3 at level 3), restocked at your ship. It stops enemy rounds, which wear it down until it collapses. Building is noisy, like the turret.
+[/list]
+
+[size=4][b]Perk levels[/b][/size]
+
+[list]
+[*][b]Perk levels matter.[/b] Each level of the turret or barricade perk above 1 sets up 15 % faster and adds 20 % structure; each turret level also adds 100 rounds (300 / 400 / 500). Small steps, no MMO scaling.
+[/list]
+
+[size=4][b]Ally engineers[/b][/size]
+
+[list]
+[*][b]On by default.[/b] Squad soldiers, including the game's unused "Turretci" role, and companions can stop in a fight and deploy a turret of their own (at most 2 per area). Tap a perk button 4 times quickly to switch them off or on; that choice is remembered.
+[/list]
+
+[size=4][b]On and off[/b][/size]
+
+[list]
+[*][b]On by default.[/b] Installed, it is on. Tap the turret or barricade perk button 3 times quickly to switch it off (the vanilla perks come back) or on again.
+[/list]
 
 [line]
 [size=5][b]Requirements[/b][/size]
@@ -40,7 +83,7 @@ Version 0.2.3 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods 
 [size=5][b]Install[/b][/size]
 
 [list=1]
-[*]Download TacticalEngineering-0.2.3.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
+[*]Download TacticalEngineering-0.2.4.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
 [*]Extract it into the game folder (...\steamapps\common\SpaceBourne 2\). It adds SB2\Binaries\Win64\Mods\TacticalEngineering\; the enabled.txt inside turns it on.
 [*]That's it: Tactical Engineering is on in game. To switch it off, tap the turret or barricade perk button 3 times quickly (remembered between sessions). StartOn = false in scripts\config.lua makes a fresh install start off.
 [/list]
@@ -86,7 +129,8 @@ Edit Mods\TacticalEngineering\scripts\config.lua. Every line is optional. The ma
     - DeploySeconds / PackSeconds (6 / 5);
     - PackRange;
     - CarrySpeed (0.8) and CarryNoSprint;
-    - Resupply: "ship", "level" or "never", and ResupplyMinutes.
+    - Resupply: "ship", "level" or "never", and ResupplyMinutes;
+    - HolsterWhileWorking (on): your weapon goes away while you set up or pack up.
 [*]Turret:
     - Scale (0.6);
     - Structure (100) and HitCost per attacker type;
@@ -108,7 +152,7 @@ The noise events are also shared with other mods (for Silent Ops) through the UE
     - the chance per second;
     - at most how many at once, and for how long.
 [*]Allies:
-    - Engineers: the starting state (on); 4 quick taps switch them in game;
+    - Engineers (on); 4 quick taps switch them in game, and that choice is remembered;
     - chances for squad soldiers and companions;
     - MaxAllyTurrets per level.
 [/list]

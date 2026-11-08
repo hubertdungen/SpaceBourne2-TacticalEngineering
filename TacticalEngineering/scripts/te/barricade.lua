@@ -156,6 +156,9 @@ local function stepWork(p, now)
     if w.pawn ~= B.T.playerAddr then B.work = nil; return end -- new pawn (death, respawn)
     local pos = U.location(p)
     if pos and U.dist(pos, w) > 50 then return B.cancel(p, "interrupted") end
+    if B.cfg.Player.HolsterWhileWorking and U.get(p, P.MeleeAttack, false) then
+        return B.cancel(p, "interrupted") -- the melee swing doesn't check the weapon lock
+    end
     U.set(p, P.DisableMove, true) -- other game code may clear it
     if now - w.t0 >= w.duration then finish(p) end
 end

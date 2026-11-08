@@ -49,6 +49,9 @@ return {
         --   "never" not replaced
         Resupply            = "ship",
         ResupplyMinutes     = 5,
+        -- Setting up or packing up (turret or barricade) takes both hands: your weapon goes away when
+        -- you start, can't be drawn until you finish or cancel, and comes back out afterwards.
+        HolsterWhileWorking = true,
     },
 
     Turret = {

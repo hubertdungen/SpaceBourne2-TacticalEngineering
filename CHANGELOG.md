@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.4 — 2026-11-08
+
+Ideas by hubertdungen (the author): ally engineers really on by default, and no weapon in hand
+while setting up a turret.
+
+- **Both hands on the job.** Setting up or packing up a turret (or a barricade) puts your weapon
+  away when you start, with the game's own holster move. You can't draw it until the work is done
+  or cancelled; then the weapon you had comes back out by itself. The perk buttons still work, so a
+  tap still cancels. A melee swing interrupts the work. `Player.HolsterWhileWorking = false` keeps
+  the old behaviour.
+- **Ally engineers back on.** They were on by default since 0.2.1, but the switch was saved on every
+  save, so an "off" stored by an older version kept them off. Now only your own choice (4 quick
+  taps) is remembered, and everyone starts with them on after this update.
+
 ## 0.2.3 — 2026-11-06
 
 - **Fixed: a UE4SS crash with many mods** ("Fatal error" in UE4SS.dll, at the main menu or in

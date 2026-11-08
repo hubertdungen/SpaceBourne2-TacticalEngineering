@@ -88,6 +88,12 @@ G.P = {
     TurretTarget = "LastDetectedActor", OwnerShooter = "OwnerShooter", Ammo = "Ammo",
     Shooting = "Shooting",                                   -- true while its shoot timer runs (StopShoot clears it)
     InCombat = "PlayerInCombat",                             -- Q1_Character
+    -- weapon in hand (Q1_Character): OverlayState 6 = pistol (slot 0), 5 = rifle (slot 1 or 2), 0 = none.
+    -- SwitchingWeapon true = the weapon keys 1/2/3 (and the switch button's tap) do nothing; the perk
+    -- buttons don't look at it. The holstered weapons' meshes on the body: the one in hand is hidden.
+    OverlayState = "OverlayState", SwitchingWeapon = "SwitchingWeapon",
+    MeleeAttack = "MeleeAttackOn?",                         -- a sword / melee swing is playing (it checks neither)
+    BodyMesh = { [0] = "PistolSM", [1] = "Slot_1_SKM", [2] = "Slot_2_SKM", [3] = "MiscMesh" },
     -- Q1_Shooter_AI
     Ready = "Ready?", Dead = "NPCDead", AIType = "AIType", IsCompanion = "IsCompanian", CanSee = "CanSeeTheTarget",
     ShootTarget = "ShooTarget", CurrentDetected = "CurrentDetected", LastDetected = "LastDetectedActor",
@@ -103,6 +109,16 @@ G.SubType     = { Shooter = 0, Tank = 1, Melee = 2, Mage = 3 }
 G.SoldierType = { Assulter = 0, Tank = 1, Medic = 2, Lazer = 3, Mech = 4, AntiMissile = 5, Sniper = 6, Turretci = 7 }
 G.BossAbility = { MiniTurrets = 6 }     -- Q1_Shooter_AI:SelectAbility(6)
 G.Stance      = { Standing = 0, Crouching = 1 }
+G.Overlay     = { None = 0, Rifle = 5, Pistol = 6 }  -- Q1_Character.OverlayState with a weapon in hand
+
+-- Weapons (Q1_Character) ------------------------------------------------------------
+-- W_1 / W_2 / W_3: the game's own weapon keys 1 / 2 / 3 for slots 0 / 1 / 2 (same checks and
+-- animations; the switch button's tap calls them too). The key of the weapon in hand puts it away,
+-- any other key draws that slot's weapon.
+G.WeaponKey = { [0] = "W_1", [1] = "W_2", [2] = "W_3" }
+-- The game's data object. Putting a weapon away at once, as the switch button's hold does:
+-- GameBuilder:UnEquipHandWeaponFromHand(slot, true), then RemoveAllWeapons(true), BPI_Set_OverlayState(0).
+G.GameBuilder = "God_GameBuilder"
 G.RotationMode = { Aiming = 2 }
 
 return G
