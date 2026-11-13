@@ -15,7 +15,7 @@
   Design notes and the test log: DESIGN.md in the repository.
 ]]
 
-local VERSION = "0.2.4"
+local VERSION = "0.2.5"
 
 local U = require("te.util")
 
@@ -26,6 +26,7 @@ local defaults = {
     Player = { DeploySeconds = 6.0, PackSeconds = 5.0, PackRange = 300, CarrySpeed = 0.8, CarryNoSprint = true,
         Resupply = "ship", ResupplyMinutes = 5, HolsterWhileWorking = true },
     Turret = { Scale = 0.6, Structure = 100, DestroyedEffect = "wreck", Rounds = 300,
+        AcquireSeconds = 0.8, BossGraceSeconds = 5.0,
         HitCost = { npc_rifle = 3, npc_boss = 4, npc_heavy = 8, npc_sniper = 12, npc_melee = 6,
             explosion = 40, player = 3, ally = 3, other = 3 } },
     Levels = { SetupFaster = 0.15, ExtraRounds = 100, ExtraStructure = 0.20 },

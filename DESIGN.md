@@ -995,3 +995,34 @@ parameters either. Open, as in HTR (same design): `hooks.lua` registers a group'
 class reappears at a new address, without `UnregisterHook` of the old pair, so the old callback may
 stay and both fire. For TE that matters only for classes that unload (squad soldiers, shooters);
 not changed here, to be fixed the same way across the set.
+
+### 0.2.5 (2026-11-13): turrets lock on before they fire
+
+The user (2026-11-13): "os bosses right now fazem spawn e as turrets e amigos fazem-lhes insta kill".
+The squad ("amigos") is for the Unofficial Patch and HTR 0.4.17; TE covers the turrets.
+
+**How the perk turret picks and fires** (`Player_PerkTurret` dump): `CollectTargets` runs every 1 s
+(a 100 m sphere trace): the first hit that is a live `Q1_Shooter_AI` with `AIType` 0, or a Character
+tagged `Enemy` and not `Dead`, that `CanShot` passes, becomes `LastDetectedActor`, then `StartShoot`.
+`StartShoot` is a do-once: it starts the `JustShoot` timer (0.1 s, first round 0.1 s later) and stays
+shut until `StopShoot` runs. `StopShoot` (do-once too) pauses the timer, clears `Shooting`, turns the
+flash and tracer off and reopens `StartShoot`. `JustShoot` with no valid target only pauses the timer:
+`StartShoot` stays shut, so clearing `LastDetectedActor` would leave the turret stuck. TE's own
+`targeting.lua` is the other direction (enemies aiming at turrets), so the gate lives in `turret.lua`.
+
+**The gate** (`gateTarget`, in the turret tick post-hook, every frame, every registered turret: the
+player's and ally engineers'): hold fire while the target's `Ready?` is false, while an `IsBoss` target
+is younger than `BossGraceSeconds` (`GetGameTimeSinceCreation`; fallback: since this turret first saw
+it), or while this turret has had it as its target for less than `AcquireSeconds` (kept per target for
+30 s, so two targets swapping each second don't restart it). Hold = `StopShoot` at most every 0.04 s
+(the first round is 0.1 s after a `StartShoot`). Released: `StartShoot` at once.
+
+**Tested in game 2026-11-13 02:22-02:25** (test slot, one launch, HTR 0.4.16 + TE + dev console):
+1. Shooter spawned 15 m away (`Ready?` true after ~0.3-0.5 s): picked at 1.3 s, "holds fire: acquiring",
+   "fires after 0.8 s", first round at 2.4 s (belt unchanged until then).
+2. `Q1_Boss_C` (840 HP, `IsBoss`, `Ready?` true after ~0.5 s here): picked at 1.5-2 s, "holds fire: boss
+   spawn grace", no round until it was 5.0 s old, then the turret fired (12 rounds) and the boss
+   destroyed it within a second. In both boss runs the squad soldiers of the test save shot the boss at
+   once (840 -> 112 HP in 1.5 s; dead at 2.5 s in the run without the HP refill): that is the "amigos"
+   half, outside TE.
+3. Cost: turret tick ~0.04 ms idle, 0.045-0.065 ms per frame with targets (0.03 before).

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.5 — 2026-11-13
+
+Reported by hubertdungen (the author): bosses were killed by turrets the moment they spawned.
+
+- **Turrets lock on before they fire.** A turret (yours or an ally engineer's) never fires at an
+  enemy that is still appearing (not active yet), leaves a boss alone for its first 5 seconds, and
+  takes 0.8 s to lock on to a new target before the first round. New settings:
+  `Turret.AcquireSeconds` (0.8) and `Turret.BossGraceSeconds` (5, 0 = off).
+
 ## 0.2.4 — 2026-11-08
 
 Ideas by hubertdungen (the author): ally engineers really on by default, and no weapon in hand

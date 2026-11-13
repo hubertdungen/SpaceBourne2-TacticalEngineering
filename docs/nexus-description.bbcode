@@ -2,7 +2,7 @@
 
 The turret perk stops being an instant MMO spawn and becomes real engineering. You carry one heavy turret, kneel to set it up and to pack it up, and lose it if you leave it behind. Once it is deployed it does the job, and the enemy treats it as a threat: they shoot back until it breaks. The barricade perk gets the same treatment, and higher perk levels make you a better engineer. It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.4 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods page[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
+Version 0.2.5 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods page[/url] · UE4SS Lua mod · works alone or with [url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url].
 
 [line]
 [size=5][b]What it does[/b][/size]
@@ -27,6 +27,7 @@ Version 0.2.4 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods 
 [*][b]It stays.[/b] No 25–40 second lifetime and no self-destruct. It keeps firing until you pack it up, it is destroyed, or you leave it behind.
 [*][b]Smaller, not weaker.[/b] It is 60 % the size of the vanilla perk turret, with the same belt-fed gun: 10 rounds/s at enemies within 100 m in line of sight, 3–5 s reloads between belts.
 [*][b]Limited ammo.[/b] It carries 300 rounds. The ammo stays with it when you pack it up, and it is refilled from your ship: in space or on a station, out of combat, while you carry the turret. Empty, it stops firing.
+[*][b]It locks on before it fires.[/b] A turret (yours or an ally engineer's) takes a moment to lock on to a new target before the first round, never fires at an enemy that is still appearing, and leaves a boss alone for its first 5 seconds, while the boss makes its entrance.
 [*][b]It can be destroyed.[/b] Rifle hits chip it, snipers and heavy weapons hurt, explosions wreck it. A destroyed turret stays as a dead wreck.
 [/list]
 
@@ -83,7 +84,7 @@ Version 0.2.4 · [url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus Mods 
 [size=5][b]Install[/b][/size]
 
 [list=1]
-[*]Download TacticalEngineering-0.2.4.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
+[*]Download TacticalEngineering-0.2.5.zip from the [url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases]releases[/url].
 [*]Extract it into the game folder (...\steamapps\common\SpaceBourne 2\). It adds SB2\Binaries\Win64\Mods\TacticalEngineering\; the enabled.txt inside turns it on.
 [*]That's it: Tactical Engineering is on in game. To switch it off, tap the turret or barricade perk button 3 times quickly (remembered between sessions). StartOn = false in scripts\config.lua makes a fresh install start off.
 [/list]
@@ -135,7 +136,9 @@ Edit Mods\TacticalEngineering\scripts\config.lua. Every line is optional. The ma
     - Scale (0.6);
     - Structure (100) and HitCost per attacker type;
     - DestroyedEffect: "wreck", or "explode" (the vanilla blast);
-    - Rounds (300): 0 = unlimited.
+    - Rounds (300): 0 = unlimited;
+    - AcquireSeconds (0.8): lock-on time before the first round at a new target;
+    - BossGraceSeconds (5): a boss is not fired at for this long after it appears (0 = off).
 [*]Levels (per perk level above 1): SetupFaster (15 %), ExtraRounds (100), ExtraStructure (20 %).
 [*]Barricades: Enabled, BuildSeconds / PackSeconds (4 / 3), PackRange, Carried (1) + ExtraPerLevel (1), Structure (150).
 [*]Noise:

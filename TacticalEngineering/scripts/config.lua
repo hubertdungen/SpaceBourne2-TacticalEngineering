@@ -67,6 +67,10 @@ return {
         -- the turret when you pack it, and is refilled from your ship (in space or on a station,
         -- out of combat) while you carry the turret. 0 = unlimited (vanilla).
         Rounds          = 300,
+        -- Turrets (yours and ally engineers') hold fire at a target that isn't active yet (still
+        -- spawning), and take a moment to lock on to a new target before the first round:
+        AcquireSeconds   = 0.8,  -- seconds from first picking a target to the first round
+        BossGraceSeconds = 5.0,  -- a boss is not fired at for this long after it appears (0 = off)
     },
 
     -- Perk levels: each level of the game's turret perk above 1 (and of the barricade perk, for

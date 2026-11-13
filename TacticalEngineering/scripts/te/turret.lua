@@ -846,6 +846,59 @@ local function onOrphanTick(t, a)
     end
 end
 
+-- Target gate (0.2.5) -------------------------------------------------------------------------
+-- The turret picks its own target: CollectTargets (every 1 s) takes the first live enemy in range it
+-- can hit, sets LastDetectedActor and calls StartShoot; the first round leaves 0.1 s later. Before
+-- that round, every frame, TE holds fire while the target is:
+--   * not active yet: Q1_Shooter_AI "Ready?" false (its BeginPlay chain; ~2-4 s for a boss);
+--   * a boss in its spawn grace (Turret.BossGraceSeconds since it appeared);
+--   * newly acquired: this turret has had it as its target for less than Turret.AcquireSeconds.
+-- Holding = the turret's own StopShoot (pauses the shoot timer, flash off, and reopens StartShoot's
+-- do-once gate, so it can fire again); clearing LastDetectedActor instead would leave that gate shut.
+-- Once allowed: StartShoot at once (the next vanilla pick could be up to 1 s later).
+local function holdReason(e, tgt, ta, now)
+    local c = cfg().Turret
+    if not U.get(tgt, P.Ready, true) then return "not ready" end
+    if (c.BossGraceSeconds or 0) > 0 and U.get(tgt, P.IsBoss, false) then
+        local age = nil
+        pcall(function() age = tgt:GetGameTimeSinceCreation() end)
+        if type(age) ~= "number" then age = now - e.acq[ta] end -- fallback: since this turret saw it
+        if age < c.BossGraceSeconds then return string.format("boss spawn grace (%.1f s old)", age) end
+    end
+    if now - e.acq[ta] < (c.AcquireSeconds or 0) then return "acquiring" end
+    return nil
+end
+
+local function gateTarget(t, a, e, now)
+    local tgt = U.get(t, P.TurretTarget, nil)
+    local ta = (tgt and U.valid(tgt)) and U.addr(tgt) or nil
+    if not ta then e.gate, e.hold = nil, nil; return end
+    if ta == e.gate and not e.hold then return end -- allowed already, same target: nothing to do
+    if ta ~= e.gate then
+        e.gate = ta
+        e.acq = e.acq or {}
+        if not e.acq[ta] then
+            for k, t0 in pairs(e.acq) do if now - t0 > 30 then e.acq[k] = nil end end
+            e.acq[ta] = now
+        end
+    end
+    local why = holdReason(e, tgt, ta, now)
+    if why then
+        if not e.hold then
+            e.hold = { since = now }
+            U.log(string.format("turret %s holds fire at %s: %s", tostring(a), U.className(tgt) or "?", why))
+        end
+        if now - (e.hold.stopAt or -1) >= 0.04 then -- StartShoot may come from CollectTargets any frame
+            e.hold.stopAt = now
+            pcall(function() t:StopShoot() end)
+        end
+    elseif e.hold then
+        U.log(string.format("turret %s fires at %s after %.1f s", tostring(a), U.className(tgt) or "?", now - e.hold.since))
+        e.hold = nil
+        pcall(function() t:StartShoot() end)
+    end
+end
+
 function T.onTurretTick(self)
     local t = self:get()
     local a = U.addr(t)
@@ -894,6 +947,7 @@ function T.onTurretTick(self)
         end
     else
         e.quiet = nil
+        if not e.dead and T.on then gateTarget(t, a, e, now) end
     end
     if now >= (e.nextLook or 0) then
         e.nextLook = now + 0.25

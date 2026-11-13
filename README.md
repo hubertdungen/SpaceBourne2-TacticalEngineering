@@ -8,7 +8,7 @@ deployed it does the job, and the enemy treats it as a threat: they shoot back u
 The barricade perk gets the same treatment, and higher perk levels make you a better engineer.
 It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.4 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
+Version 0.2.5 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
 works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism).
 
 ## What it does
@@ -42,6 +42,9 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 - **Limited ammo.** It carries 300 rounds. The ammo stays with it when you pack it up, and it is
   refilled from your ship: in space or on a station, out of combat, while you carry the turret.
   Empty, it stops firing.
+- **It locks on before it fires.** A turret (yours or an ally engineer's) takes a moment to lock on
+  to a new target before the first round, never fires at an enemy that is still appearing, and
+  leaves a boss alone for its first 5 seconds, while the boss makes its entrance.
 - **It can be destroyed.** Rifle hits chip it, snipers and heavy weapons hurt, explosions wreck
   it. A destroyed turret stays as a dead wreck.
 
@@ -102,7 +105,7 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 
 ## Install
 
-1. Download `TacticalEngineering-0.2.4.zip` from the
+1. Download `TacticalEngineering-0.2.5.zip` from the
    [releases](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases).
 2. Extract it into the game folder (`...\steamapps\common\SpaceBourne 2\`). It adds
    `SB2\Binaries\Win64\Mods\TacticalEngineering\`; the `enabled.txt` inside turns it on.
@@ -168,7 +171,9 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
   - `Scale` (0.6);
   - `Structure` (100) and `HitCost` per attacker type;
   - `DestroyedEffect`: `"wreck"`, or `"explode"` (the vanilla blast);
-  - `Rounds` (300): 0 = unlimited.
+  - `Rounds` (300): 0 = unlimited;
+  - `AcquireSeconds` (0.8): lock-on time before the first round at a new target;
+  - `BossGraceSeconds` (5): a boss is not fired at for this long after it appears (0 = off).
 - `Levels` (per perk level above 1): `SetupFaster` (15 %), `ExtraRounds` (100),
   `ExtraStructure` (20 %).
 - `Barricades`: `Enabled`, `BuildSeconds` / `PackSeconds` (4 / 3), `PackRange`, `Carried` (1) +
@@ -209,6 +214,11 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
 
 <!-- nexus:skip -->
 ## Test status
+
+0.2.5 tested in game on 2026-11-13, with HTR 0.4.16 (scripted, test save, NPCs spawned from script):
+- a shooter 15 m away: the turret picks it, holds 0.8 s ("acquiring", no round), then fires;
+- a boss (`Q1_Boss_C`): the turret has it as its target but fires nothing until it is 5 s old, then
+  opens fire.
 
 0.2.4 tested in game on 2026-11-08, with HTR 0.4.14 (scripted, test save):
 - an old saved `allies=off`: the ally engineers start on; 4 taps store `alliesChoice=off` / `on`;
