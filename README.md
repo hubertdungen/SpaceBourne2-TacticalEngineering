@@ -314,3 +314,6 @@ TheCalcMan (Steam), for play-testing the realism set and for the ammo-limit idea
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+
+<p align="center"><a href="https://dlforge.dungenlabs.com"><img src="docs/branding/dlforge-logo.svg" alt="DL Forge" width="120"></a><br><a href="https://dlforge.dungenlabs.com">DL Forge</a></p>
