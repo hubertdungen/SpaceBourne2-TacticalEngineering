@@ -8,7 +8,7 @@ deployed it does the job, and the enemy treats it as a threat: they shoot back u
 The barricade perk gets the same treatment, and higher perk levels make you a better engineer.
 It uses the game's own perk buttons: no extra keys.
 
-Version 0.2.5 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
+Version 0.2.7 · [Nexus Mods page](https://www.nexusmods.com/spacebourne2/mods/10) · UE4SS Lua mod ·
 works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism).
 
 ## What it does
@@ -82,6 +82,9 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 - **On by default.** Squad soldiers, including the game's unused "Turretci" role, and companions
   can stop in a fight and deploy a turret of their own (at most 2 per area). Tap a perk button 4
   times quickly to switch them off or on; that choice is remembered.
+- **Their turrets refill.** An ally turret refills its 300 rounds every 5 minutes and a minute
+  after you leave combat (a cleared dungeon, a finished mission), and one that ran dry switches
+  on again. Your own turret refills at your ship.
 
 ### On and off
 
@@ -105,7 +108,7 @@ works alone or with [Hardcore Tactical Realism](https://github.com/hubertdungen/
 
 ## Install
 
-1. Download `TacticalEngineering-0.2.5.zip` from the
+1. Download `TacticalEngineering-0.2.7.zip` from the
    [releases](https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering/releases).
 2. Extract it into the game folder (`...\steamapps\common\SpaceBourne 2\`). It adds
    `SB2\Binaries\Win64\Mods\TacticalEngineering\`; the `enabled.txt` inside turns it on.
@@ -173,7 +176,10 @@ Edit `Mods\TacticalEngineering\scripts\config.lua`. Every line is optional. The 
   - `DestroyedEffect`: `"wreck"`, or `"explode"` (the vanilla blast);
   - `Rounds` (300): 0 = unlimited;
   - `AcquireSeconds` (0.8): lock-on time before the first round at a new target;
-  - `BossGraceSeconds` (5): a boss is not fired at for this long after it appears (0 = off).
+  - `BossGraceSeconds` (5): a boss is not fired at for this long after it appears (0 = off);
+  - `UnstickSeconds` (1.5): a turret frozen with its muzzle flash on is reset after this long (0 = off);
+  - `AllyRefillMinutes` (5) and `AllyRefillAfterCombat` (60): ally turrets refill their rounds
+    this often, and this many seconds after you leave combat (0 = off for each).
 - `Levels` (per perk level above 1): `SetupFaster` (15 %), `ExtraRounds` (100),
   `ExtraStructure` (20 %).
 - `Barricades`: `Enabled`, `BuildSeconds` / `PackSeconds` (4 / 3), `PackRange`, `Carried` (1) +

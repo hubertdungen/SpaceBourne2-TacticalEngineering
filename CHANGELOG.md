@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.7 — 2026-11-16
+
+Idea by hubertdungen (the author): ally turrets refill every few minutes and when a scene ends.
+
+- **Ally turrets refill.** An ally engineer's turret now refills its 300 rounds every 5 minutes and
+  a minute after you leave combat (a cleared dungeon, a finished mission), and a turret that
+  ran dry switches on again. `Turret.AllyRefillMinutes` (5) and `Turret.AllyRefillAfterCombat` (60),
+  0 = off. Your own turret still refills at your ship. A new level gives fresh turrets anyway.
+- **Rounds are counted right.** The turret's reload used to be counted as 30-50 rounds fired, so a
+  turret ran dry too early and kept sounding like it was firing. Only real rounds count now.
+
+## 0.2.6 — 2026-11-16
+
+- **Fixed: a turret frozen with its muzzle flash on.** When a turret's target vanished mid-burst
+  (killed and removed), the game left the turret stuck: flash lit, no sound, no rounds, head still
+  turning to new enemies, and enemies ignoring it (seen with an ally engineer's turret at a station).
+  The game's short turret lifetime used to hide it. A turret frozen like that for 1.5 s is now reset
+  and fires again on the next target. `Turret.UnstickSeconds` (1.5, 0 = off).
+- Each ally turret deployment is now written to `te.log` (one line), to help with bug reports.
+
 ## 0.2.5 — 2026-11-13
 
 Reported by hubertdungen (the author): bosses were killed by turrets the moment they spawned.

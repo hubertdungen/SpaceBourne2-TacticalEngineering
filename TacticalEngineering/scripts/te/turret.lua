@@ -233,6 +233,10 @@ function T.spawnTurret(ctx, loc, yaw, kind, owner)
     if s and s ~= 1 then pcall(function() actor:SetActorScale3D({ X = s, Y = s, Z = s }) end) end -- verified: 0.8 shows as 0.8
     local a = register(actor, kind, owner, loc) -- owner: address of the ally engineer (bookkeeping only)
     U.log(string.format("spawned %s turret %s at %.0f %.0f %.0f", kind, tostring(a), loc.X, loc.Y, loc.Z))
+    if kind == "ally" then -- rare: always written, so a report has evidence even with Debug.Log off
+        U.warn(string.format("ally turret %s deployed by %s (%s) at %.0f %.0f %.0f", tostring(a),
+            tostring(owner), U.className(ctx) or "?", loc.X, loc.Y, loc.Z))
+    end
     return a
 end
 
@@ -643,6 +647,40 @@ function T.resupply(p)
     U.notify(p, "New turret issued - you are carrying it")
 end
 
+-- Ally turrets have no ship to resupply at (0.2.7), so they refill on their own: every
+-- Turret.AllyRefillMinutes (default 5) and once the player has been out of combat for
+-- Turret.AllyRefillAfterCombat seconds after a fight (a dungeon room, a mission step: "the scene is over").
+-- A level change needs nothing: ally turrets die with their level (onArrival). Only turrets that used
+-- ammo are refilled; one that ran dry (silenced) is switched on again. The player's own turret keeps
+-- its ship resupply. 1 Hz, on the game thread, no timers of its own.
+local function refillAllies(p, now)
+    local c = cfg().Turret
+    local rounds = c.Rounds
+    if not rounds or rounds <= 0 then return end
+    local mins, after = c.AllyRefillMinutes or 0, c.AllyRefillAfterCombat or 0
+    local inCombat = U.get(p, P.InCombat, false)
+    if inCombat then T.combatAt, T.combatSeen = now, true end
+    local calm = after > 0 and T.combatSeen and not inCombat and now - (T.combatAt or now) >= after
+    if calm then T.combatSeen = false end
+    for a, e in pairs(T.turrets) do
+        if e.kind == "ally" and not e.dead then
+            if mins > 0 and not e.refillAt then e.refillAt = now + mins * 60 end
+            local due = mins > 0 and now >= e.refillAt
+            if due then e.refillAt = now + mins * 60 end
+            if (due or calm) and (e.outOfAmmo or (e.ammo or rounds) < rounds) then
+                local was = e.ammo or 0
+                e.ammo = rounds
+                if e.outOfAmmo then
+                    e.outOfAmmo, e.quiet = false, nil
+                    T.queue(a, "resume") -- the silence switched it off
+                end
+                U.warn(string.format("ally turret %s refilled (%s): %d -> %d rounds", tostring(a),
+                    due and "timer" or "fight over", was, rounds))
+            end
+        end
+    end
+end
+
 -- At your ship (in space) or a station, out of combat.
 local function atShip(p)
     if U.get(p, P.InCombat, false) then return false end
@@ -722,6 +760,7 @@ local function step(p, now)
     if now >= T.nextSlow then
         T.nextSlow = now + 1.0
         checkLost(p, now)
+        refillAllies(p, now)
         checkResupply(p)
     end
 end
@@ -899,6 +938,25 @@ local function gateTarget(t, a, e, now)
     end
 end
 
+-- Stuck turret (0.2.6). JustShoot, when its target is no longer valid (destroyed, removed), only pauses
+-- the shoot timer: it does not run StopShoot. StartShoot is a do-once that only StopShoot reopens, so
+-- the turret never fires again: Shooting stays true, the muzzle flash stays lit, no sound / round /
+-- damage, while CollectTargets keeps turning its head to new enemies. Vanilla hides it behind the perk's
+-- 25-40 s lifetime; a permanent turret keeps it. Seen: a lit flash and nothing else (ally turret at a
+-- station, 2026-11-15). A live turret changes its belt count every 0.1 s, so Shooting with a belt that has
+-- not changed for Turret.UnstickSeconds (and not empty: a reload counts down to <= 0) is stuck:
+-- StopShoot reopens StartShoot and clears the flash; the next CollectTargets (<= 1 s) restarts it.
+local function unstick(t, a, e, belt, now)
+    local secs = cfg().Turret.UnstickSeconds or 0
+    if secs <= 0 or e.dead or e.stopped or e.outOfAmmo or e.hold or not T.on then return end
+    if belt == nil or belt <= 0 or now - (e.beltAt or now) < secs or now - (e.unstickAt or -1e9) < 1.0 then return end
+    if not (U.get(t, P.ActiveNow, false) and U.get(t, P.Shooting, false)) then return end
+    e.unstickAt = now
+    pcall(function() t:StopShoot() end)
+    U.warn(string.format("%s turret %s was stuck (flash on, no rounds for %.1f s): stopped, it restarts on the next target",
+        e.kind, tostring(a), now - (e.beltAt or now)))
+end
+
 function T.onTurretTick(self)
     local t = self:get()
     local a = U.addr(t)
@@ -917,11 +975,15 @@ function T.onTurretTick(self)
     -- Rounds fired = drops of its belt count (a reload refills the belt: not counted).
     local belt = U.get(t, P.Ammo, nil)
     if belt ~= nil then
-        if e.lastBelt ~= nil and belt < e.lastBelt then
+        if e.lastBelt == nil or belt ~= e.lastBelt then e.beltAt = now end -- any change: it is alive (a reload refills)
+        -- JustShoot lowers the belt before it knows it is empty: the shot that takes it to 0 or below, and the
+        -- countdown while it reloads (3-5 s, to about -40), fire nothing. Only drops down to 1 are rounds (0.2.7;
+        -- before, each reload cost about 30-50 phantom rounds and kept the turret "firing" for the enemies' ears).
+        if e.lastBelt ~= nil and math.max(belt, 1) < math.max(e.lastBelt, 1) then
             e.firedAt = now
             local rounds = cfg().Turret.Rounds
             if rounds > 0 and not e.outOfAmmo then
-                e.ammo = (e.ammo or rounds) - (e.lastBelt - belt)
+                e.ammo = (e.ammo or rounds) - (math.max(e.lastBelt, 1) - math.max(belt, 1))
                 if e.ammo <= 0 then
                     e.ammo, e.outOfAmmo = 0, true
                     if e.kind == "player" then
@@ -953,6 +1015,7 @@ function T.onTurretTick(self)
         e.nextLook = now + 0.25
         local l = U.location(t)
         if l then e.X, e.Y, e.Z = l.X, l.Y, l.Z end
+        unstick(t, a, e, belt, now)
     end
 end
 

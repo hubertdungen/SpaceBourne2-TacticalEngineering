@@ -996,6 +996,69 @@ class reappears at a new address, without `UnregisterHook` of the old pair, so t
 stay and both fire. For TE that matters only for classes that unload (squad soldiers, shooters);
 not changed here, to be fixed the same way across the set.
 
+### 0.2.7 (2026-11-16): ally turret refill, reload counted right
+
+**Why the turret stayed idle** (static, from the `Player_PerkTurret` dump): every do-once gate has a reopener
+(StartShoot's by StopShoot, StopShoot's by StartShoot, the reload's after its 3-5 s delay, the hit-FX one after
+0.2 s) and `CollectTargets` (a 1 s timer set once in BeginPlay, no do-once, no `ActiveNow` check) restarts the
+turret as soon as it finds a target `CanShot` accepts. `CanShot` is a line trace (channel index 10, ignore list
+never filled) from the turret's Arrow to the target's origin and answers true only if the first hit is the
+target. So an idle turret has no shootable target: a corpse, cover or another enemy in the way.
+
+**Reload counting.** `JustShoot` lowers the belt before it knows it is empty and keeps counting down during the
+3-5 s reload (to about -40) without firing. TE counted those drops as rounds. Now only drops down to a belt of 1
+count (`e.ammo`, `e.firedAt`, noise).
+
+**Refill** (`refillAllies`, 1 Hz, ally turrets only): `Turret.AllyRefillMinutes` (5, per turret since spawn or its
+last refill) and `Turret.AllyRefillAfterCombat` (60 s after the player's `PlayerInCombat` ends, once per fight);
+only turrets that used rounds; a turret that ran dry (`outOfAmmo`) is switched on via "resume". One `U.warn` per
+refill. A level change needs nothing: ally turrets die with their level (`onArrival`).
+
+**Tested in game 2026-11-16 02:19-02:25** (one muted launch, test slot, TE + dev console only, HTR off so enemies
+stand in the open; a test-only `CanShot` post-hook logged each check):
+1. (a) Ally-kind turret, two shooters; target destroyed after 2 belt drops: "stuck ... stopped" after 1.7 s.
+   Shooters and corpses removed, a fresh enemy 7 m ahead: `CS ... canShot=true`, the turret fired (belt 17 to -3).
+   The first target check of the run was `canShot=false` for an enemy at 7.9 m (13 calls in one second) while the
+   other, in clear view, was `true`: a blocked line makes the turret ignore that enemy. HTR's cover does the same.
+2. Reload accounting: `e.ammo` 297 to 281 while the belt went 17 to -3 and on to -6 (16 real rounds); the
+   countdown no longer counts.
+3. (b) Timer: `e.ammo` 5, 12 s timer: "ally turret ... refilled (timer): 5 -> 300 rounds" once; no refill while full
+   (the second timer tick did nothing). Out of ammo (ammo 0, outOfAmmo, silenced, ActiveNow false): "refilled
+   (timer): 0 -> 300", ActiveNow true, a fresh enemy was fired at (belt 20 to 18), and the timer topped it up
+   once (298 -> 300).
+4. Fight over: PlayerInCombat cleared by the test (the slot keeps it on), AfterCombat 5 s: "refilled (fight over):
+   100 -> 300 rounds" 5 s later, once. Not seen naturally: the game's own end of combat in this slot.
+5. No error lines, no crash; turret tick ~0.04 ms per frame.
+
+### 0.2.6 (2026-11-16): a turret frozen with its muzzle flash on
+
+User report 2026-11-15 (Rivenox station): an ally engineer's turret showed only the muzzle flash, no sound,
+no rounds, no damage, and enemies ignored it. Cause (read from the `Player_PerkTurret` dump): `JustShoot`, when
+`LastDetectedActor` is no longer valid, only pauses the shoot timer (no `StopShoot`); `StartShoot` is a do-once
+that only `StopShoot` reopens, so the turret never fires again. `Shooting` stays true and the flash stays on.
+Vanilla hides it behind the 25-40 s lifetime. Enemies engage a turret only after its belt dropped (turret.lua
+`firedAt`), so they ignore it.
+
+**Fix** (`unstick`, in the 4 Hz block of `onTurretTick`): `ActiveNow` and `Shooting` true, belt > 0, belt unchanged
+for `Turret.UnstickSeconds` (1.5; 0 = off), not stopped / empty / holding -> `StopShoot` once (at most 1 per
+second) and one `U.warn`. A live turret changes its belt every 0.1 s and a reload counts the belt down, so neither
+is flagged. Each ally deployment writes one `U.warn` line.
+
+**Tested in game 2026-11-16 02:04-02:09** (one muted launch, test slot, HTR 0.4.18 + TE, dev runner on gametick):
+1. Fix off (`UnstickSeconds = 0`): an ally-kind turret, two shooters at 15 m; the turret's target was destroyed
+   (`K2_DestroyActor`) after 2 belt drops. Result: `Shooting` true, belt frozen at 17, flash on, `firedAgo`
+   growing for 12 s, no more rounds: the stuck state reproduced.
+2. Fix on: same test: "ally turret ... was stuck (flash on, no rounds for 1.7 s): stopped" at 02:06:28;
+   `Shooting` false, flash off 1.5 s later.
+3. Not shown: that the reset turret fires again. After the reset it stayed idle (even for a fresh enemy 9 m to
+   the side), and so did a turret in the fix-off run after a reload. `CanShot` is a line trace to the target; the
+   test's corpses and an enemy engaging the turret may block it, and a manual `CollectTargets` / `StartShoot` did
+   not restart it either, so this is not proven either way. To check next time: a clear-line fresh target, or the
+   user's own report.
+4. Regression: a normal burst on a Shooter_AI target killed it in 10 rounds, no "stuck" warning. A reload with the
+   fix on was not exercised (the belt changes every sample in the fix-off reload trace, so the rule would not
+   fire). No errors, no crash.
+
 ### 0.2.5 (2026-11-13): turrets lock on before they fire
 
 The user (2026-11-13): "os bosses right now fazem spawn e as turrets e amigos fazem-lhes insta kill".

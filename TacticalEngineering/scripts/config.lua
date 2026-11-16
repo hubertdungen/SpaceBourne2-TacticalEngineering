@@ -71,6 +71,14 @@ return {
         -- spawning), and take a moment to lock on to a new target before the first round:
         AcquireSeconds   = 0.8,  -- seconds from first picking a target to the first round
         BossGraceSeconds = 5.0,  -- a boss is not fired at for this long after it appears (0 = off)
+        -- A turret whose target vanished mid-burst can freeze with its muzzle flash on and never fire
+        -- again (a game bug that its short vanilla lifetime hides). Seen this long frozen, it is reset:
+        UnstickSeconds   = 1.5,  -- (0 = off)
+        -- Ally engineers' turrets have no ship to resupply at: they refill their rounds on their own, every
+        -- AllyRefillMinutes (0 = off) and once you have been out of combat for AllyRefillAfterCombat seconds
+        -- after a fight (0 = off). Your own turret keeps refilling at your ship.
+        AllyRefillMinutes     = 5,
+        AllyRefillAfterCombat = 60,
     },
 
     -- Perk levels: each level of the game's turret perk above 1 (and of the barricade perk, for
